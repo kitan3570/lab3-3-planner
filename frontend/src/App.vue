@@ -107,12 +107,22 @@ function onLocationDeleted(locationId: number) {
       {{ connectOk }}
     </div>
 
-    <main class="main">
-      <div class="left">
-        <PlanForm @created="onCreated" @reset="onReset" />
-        <div v-if="planId" class="stack">
-          <div v-if="refreshError" class="stack__error">{{ refreshError }}</div>
-          <div v-if="refreshing" class="stack__hint">同步天气中…</div>
+    <main class="layout">
+      <section class="upper">
+        <div class="pane">
+          <PlanForm @created="onCreated" @reset="onReset" />
+        </div>
+        <div class="pane">
+          <MapSelector :plan-id="planId" @added="onLocationAdded" />
+        </div>
+      </section>
+
+      <section class="lower">
+        <div v-if="planId" class="lower__stack">
+          <div class="lower__meta">
+            <div v-if="refreshError" class="lower__error">{{ refreshError }}</div>
+            <div v-else-if="refreshing" class="lower__hint">同步天气中…</div>
+          </div>
           <Itinerary
             :plan-id="planId"
             :locations="locations as any"
@@ -120,11 +130,10 @@ function onLocationDeleted(locationId: number) {
             @deleted="onLocationDeleted"
           />
         </div>
-      </div>
-
-      <div class="right">
-        <MapSelector :plan-id="planId" @added="onLocationAdded" />
-      </div>
+        <div v-else class="lower__empty">
+          先在上方创建规划并添加地点，行程安排会在这里出现。
+        </div>
+      </section>
     </main>
 
     <footer class="foot">
@@ -247,36 +256,62 @@ function onLocationDeleted(locationId: number) {
   background: rgba(54, 214, 153, 0.12);
 }
 
-.main {
+.layout {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.2fr);
   gap: 18px;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
-  align-items: start;
 }
 
-.left,
-.right {
+.upper {
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.2fr);
+  gap: 18px;
+  align-items: stretch;
 }
 
-.stack {
+.pane {
+  display: flex;
+  min-width: 0;
+}
+
+.pane :deep(.card) {
+  width: 100%;
+  height: 100%;
+}
+
+.lower {
+  min-width: 0;
+}
+
+.lower__stack {
   display: grid;
   gap: 10px;
 }
 
-.stack__hint {
+.lower__meta {
+  min-height: 16px;
+}
+
+.lower__hint {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.68);
   padding: 0 2px;
 }
 
-.stack__error {
+.lower__error {
   font-size: 12px;
   color: rgba(255, 144, 163, 0.95);
   padding: 0 2px;
+}
+
+.lower__empty {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
 }
 
 .muted {
@@ -301,7 +336,7 @@ function onLocationDeleted(locationId: number) {
     align-items: stretch;
   }
 
-  .main {
+  .upper {
     grid-template-columns: 1fr;
   }
 }

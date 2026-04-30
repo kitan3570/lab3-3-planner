@@ -163,8 +163,8 @@ async function addToPlan() {
         {{ errorMessage }}
       </div>
 
-      <div class="actions">
-        <button class="btn btn--primary" type="button" :disabled="!canAdd" @click="addToPlan">
+      <div class="cta">
+        <button class="btn btn--primary btn--cta" type="button" :disabled="!canAdd" @click="addToPlan">
           <span class="btn__text">{{ adding ? "加入中…" : "加入当前规划" }}</span>
         </button>
         <div class="status" v-if="selected && planId">
@@ -315,8 +315,8 @@ async function addToPlan() {
 
 .panel__row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px 14px;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 8px;
 }
 
 .field {
@@ -363,11 +363,11 @@ async function addToPlan() {
   font-size: 13px;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.cta {
   margin-top: 14px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
 }
 
 .btn {
@@ -390,6 +390,12 @@ async function addToPlan() {
   border-color: rgba(12, 26, 82, 0.15);
   background: linear-gradient(135deg, rgba(28, 66, 185, 0.96), rgba(160, 35, 96, 0.94));
   box-shadow: 0 18px 40px rgba(38, 78, 198, 0.26);
+}
+
+.btn--cta {
+  width: min(420px, 100%);
+  padding: 12px 16px;
+  font-size: 14px;
 }
 
 .btn--primary:hover:not(:disabled) {

@@ -204,23 +204,25 @@ async function remove(locationId: number) {
               </label>
             </div>
 
-            <label class="field field--full">
-              <span class="field__label">备注</span>
-              <textarea
-                v-model="drafts[loc.id].remarks"
-                class="field__input field__textarea"
-                rows="2"
-                :disabled="saving[loc.id]"
-                @input="scheduleSave(loc.id)"
-                placeholder="例如：门票/排队/最佳拍照点…"
-              />
-            </label>
+            <div class="note">
+              <label class="field field--full">
+                <span class="field__label">备注</span>
+                <textarea
+                  v-model="drafts[loc.id].remarks"
+                  class="field__input field__textarea"
+                  rows="2"
+                  :disabled="saving[loc.id]"
+                  @input="scheduleSave(loc.id)"
+                  placeholder="例如：门票/排队/最佳拍照点…"
+                />
+              </label>
 
-            <div class="card__foot">
-              <div v-if="error[loc.id]" class="err">{{ error[loc.id] }}</div>
-              <div v-else class="hint">
-                <span v-if="saving[loc.id]" class="sync">保存中…</span>
-                <span v-else class="ok">已同步</span>
+              <div class="card__foot">
+                <div v-if="error[loc.id]" class="err">{{ error[loc.id] }}</div>
+                <div v-else class="hint">
+                  <span v-if="saving[loc.id]" class="sync">保存中…</span>
+                  <span v-else class="ok">已同步</span>
+                </div>
               </div>
             </div>
           </article>
@@ -287,9 +289,10 @@ async function remove(locationId: number) {
 
 .cols {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 12px;
+  grid-template-columns: repeat(3, minmax(360px, 1fr));
+  gap: 14px;
+  padding: 14px;
+  overflow-x: auto;
 }
 
 .col {
@@ -349,7 +352,7 @@ async function remove(locationId: number) {
 
 .cards {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   padding: 12px;
 }
 
@@ -372,10 +375,9 @@ async function remove(locationId: number) {
 .card__name {
   font-weight: 850;
   letter-spacing: -0.01em;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .iconBtn {
@@ -424,13 +426,13 @@ async function remove(locationId: number) {
 }
 
 .pill--ok {
-  background: rgba(54, 214, 153, 0.12);
-  color: rgba(214, 255, 236, 0.92);
+  background: rgba(54, 214, 153, 0.08);
+  color: rgba(214, 255, 236, 0.82);
 }
 
 .pill--down {
-  background: rgba(255, 90, 116, 0.12);
-  color: rgba(255, 195, 205, 0.92);
+  background: rgba(255, 90, 116, 0.08);
+  color: rgba(255, 195, 205, 0.84);
 }
 
 .pill--idle {
@@ -447,7 +449,7 @@ async function remove(locationId: number) {
   margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px 10px;
+  gap: 8px;
 }
 
 .field {
@@ -489,8 +491,13 @@ async function remove(locationId: number) {
   min-height: 72px;
 }
 
-.card__foot {
+.note {
   margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.card__foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -516,14 +523,9 @@ async function remove(locationId: number) {
   line-height: 1.35;
 }
 
-@media (max-width: 1100px) {
-  .cols {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 980px) {
   .form {
     grid-template-columns: 1fr;
   }
 }
 </style>
-
