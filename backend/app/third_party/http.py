@@ -14,3 +14,18 @@ async def get_json(url: str, *, headers: dict[str, str] | None = None, timeout_s
         except httpx.HTTPError as e:
             raise ThirdPartyUpstreamError(str(e)) from e
 
+
+async def post_json(
+    url: str,
+    *,
+    json_body: dict,
+    headers: dict[str, str] | None = None,
+    timeout_s: float = 20,
+) -> dict:
+    async with httpx.AsyncClient(timeout=timeout_s) as client:
+        try:
+            res = await client.post(url, headers=headers, json=json_body)
+            res.raise_for_status()
+            return res.json()
+        except httpx.HTTPError as e:
+            raise ThirdPartyUpstreamError(str(e)) from e

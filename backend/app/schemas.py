@@ -13,6 +13,10 @@ class WeatherInfo(BaseModel):
     error: str | None = None
 
 
+class AISummaryResponse(BaseModel):
+    text: str
+
+
 class PlanCreate(BaseModel):
     title: str
     date: date

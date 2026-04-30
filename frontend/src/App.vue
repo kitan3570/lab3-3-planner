@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { ApiError, apiFetch } from "./lib/api"
+import AISummaryCard from "./components/AISummaryCard.vue"
 import Itinerary, { type LocationRead as ItineraryLocation } from "./components/Itinerary.vue"
 import MapSelector from "./components/MapSelector.vue"
 import PlanForm, { type PlanRead } from "./components/PlanForm.vue"
@@ -123,12 +124,15 @@ function onLocationDeleted(locationId: number) {
             <div v-if="refreshError" class="lower__error">{{ refreshError }}</div>
             <div v-else-if="refreshing" class="lower__hint">同步天气中…</div>
           </div>
-          <Itinerary
-            :plan-id="planId"
-            :locations="locations as any"
-            @updated="onLocationUpdated"
-            @deleted="onLocationDeleted"
-          />
+          <div class="lower__grid">
+            <Itinerary
+              :plan-id="planId"
+              :locations="locations as any"
+              @updated="onLocationUpdated"
+              @deleted="onLocationDeleted"
+            />
+            <AISummaryCard :plan-id="planId" />
+          </div>
         </div>
         <div v-else class="lower__empty">
           先在上方创建规划并添加地点，行程安排会在这里出现。
@@ -289,6 +293,13 @@ function onLocationDeleted(locationId: number) {
   gap: 10px;
 }
 
+.lower__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  gap: 14px;
+  align-items: start;
+}
+
 .lower__meta {
   min-height: 16px;
 }
@@ -337,6 +348,10 @@ function onLocationDeleted(locationId: number) {
   }
 
   .upper {
+    grid-template-columns: 1fr;
+  }
+
+  .lower__grid {
     grid-template-columns: 1fr;
   }
 }

@@ -5,8 +5,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db, init_db
 from app.models import Location, Plan
-from app.schemas import LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead
+from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead
+from app.third_party.clients.deepseek_client import generate_text
 from app.third_party.clients.weather_client import get_weather_summary
+from app.third_party.errors import ThirdPartyAuthError, ThirdPartyUpstreamError
 
 app = FastAPI(title="Lab 3-2 智能出行规划器 API")
 
@@ -127,6 +129,82 @@ def delete_location(plan_id: int, location_id: int, db: Session = Depends(get_db
     db.delete(location)
     db.commit()
     return Response(status_code=204)
+
+
+@app.post("/api/plans/{plan_id}/ai-summary", response_model=AISummaryResponse)
+@app.post("/api/plans/{plan_id}/ai-summary/", response_model=AISummaryResponse, include_in_schema=False)
+async def ai_summary(plan_id: int, db: Session = Depends(get_db)) -> AISummaryResponse:
+    stmt = select(Plan).options(joinedload(Plan.locations)).where(Plan.id == plan_id)
+    plan = db.execute(stmt).scalars().first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    locations = list(plan.locations)
+    for loc in locations:
+        loc.weather = await get_weather_summary(lat=loc.lat, lng=loc.lng)
+
+    total_locations_cost = float(sum((loc.estimated_cost or 0) for loc in locations))
+    total_duration = int(sum((loc.duration or 0) for loc in locations))
+
+    slot_cost: dict[str, float] = {"上午": 0.0, "下午": 0.0, "晚上": 0.0}
+    for loc in locations:
+        slot = str(loc.time_slot)
+        if slot in slot_cost:
+            slot_cost[slot] += float(loc.estimated_cost or 0)
+
+    budget_left = float(plan.budget) - total_locations_cost
+
+    system_prompt = (
+        "你是一个专业的出行规划助手。你将根据用户的出行规划信息、地点清单、天气与预算情况，"
+        "输出一段排版好的中文纯文本建议（不要使用 Markdown 语法，不要使用表格，不要用 #、-、* 等标记）。\n"
+        "请用以下固定分段标题格式输出：\n"
+        "【总体摘要】\n"
+        "【行程安排建议（上午）】\n"
+        "【行程安排建议（下午）】\n"
+        "【行程安排建议（晚上）】\n"
+        "【预算与花费】\n"
+        "【风险与备选方案】\n"
+        "每段用 2-6 行自然语言给出可执行建议。不要泄露任何密钥信息。"
+    )
+
+    lines: list[str] = []
+    lines.append(f"出行规划：{plan.title}")
+    lines.append("")
+    lines.append(f"日期：{plan.date}")
+    lines.append(f"人数：{plan.people_count}")
+    lines.append(f"预算：¥{plan.budget}")
+    if plan.preferences:
+        lines.append(f"偏好：{plan.preferences}")
+    if plan.remarks:
+        lines.append(f"备注：{plan.remarks}")
+    lines.append("")
+    lines.append("地点清单：")
+    lines.append("")
+    for loc in locations:
+        w = getattr(loc, "weather", None) or {}
+        weather_text = w.get("summary") if w.get("ok") else "天气不可用"
+        remarks = loc.remarks or ""
+        extra = f"；备注：{remarks}" if remarks else ""
+        lines.append(
+            f"{loc.time_slot}｜{loc.name}｜{weather_text}｜¥{loc.estimated_cost:.0f}｜{loc.duration}分钟{extra}"
+        )
+    lines.append("")
+    lines.append("花费汇总：")
+    lines.append("")
+    lines.append(f"地点预计花费合计：¥{total_locations_cost:.0f}")
+    lines.append(f"总停留时长：{total_duration} 分钟")
+    lines.append(f"上午/下午/晚上花费：¥{slot_cost['上午']:.0f} / ¥{slot_cost['下午']:.0f} / ¥{slot_cost['晚上']:.0f}")
+    lines.append(f"预算差额：¥{budget_left:.0f}（正数=剩余，负数=超支）")
+
+    user_prompt = "\n".join(lines)
+
+    try:
+        text = await generate_text(system_prompt=system_prompt, user_prompt=user_prompt)
+        return AISummaryResponse(text=text)
+    except ThirdPartyAuthError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except ThirdPartyUpstreamError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
 
 
 __all__ = ["app"]
