@@ -38,6 +38,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "updated", location: LocationRead): void
   (e: "deleted", locationId: number): void
+  (e: "export"): void
 }>()
 
 const drafts = reactive<Record<number, LocationUpdate & { name: string; lat: number; lng: number }>>({})
@@ -131,7 +132,10 @@ async function remove(locationId: number) {
       <div class="board__kicker">Itinerary</div>
       <div class="board__titleRow">
         <h3 class="board__title">已选地点 · 行程安排</h3>
-        <div class="board__meta">自动保存</div>
+        <div class="board__actions">
+          <button class="exportBtn" type="button" @click="emit('export')">导出行程单</button>
+          <div class="board__meta">自动保存</div>
+        </div>
       </div>
       <p class="board__subtitle">按“上午 / 下午 / 晚上”分组；修改后会自动同步到后端。</p>
     </header>
@@ -269,6 +273,13 @@ async function remove(locationId: number) {
   justify-content: space-between;
 }
 
+.board__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
 .board__title {
   margin: 0;
   font-size: 16px;
@@ -278,6 +289,29 @@ async function remove(locationId: number) {
 .board__meta {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.66);
+}
+
+.exportBtn {
+  border-radius: 999px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+
+.exportBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.exportBtn:active {
+  transform: translateY(0px);
 }
 
 .board__subtitle {

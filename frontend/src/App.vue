@@ -17,6 +17,16 @@ const refreshError = ref<string | null>(null)
 
 const planId = computed(() => currentPlan.value?.id ?? null)
 const locations = computed(() => currentPlan.value?.locations ?? [])
+const totalEstimatedCost = computed(() => {
+  return locations.value.reduce((sum, loc) => sum + (Number(loc.estimated_cost) || 0), 0)
+})
+const budgetExceeded = computed(() => {
+  if (!currentPlan.value) return null
+  const budget = Number(currentPlan.value.budget) || 0
+  const total = totalEstimatedCost.value
+  if (total <= budget) return null
+  return { total, over: total - budget, budget }
+})
 
 async function checkBackend() {
   connecting.value = true
@@ -79,6 +89,88 @@ function onLocationDeleted(locationId: number) {
     locations: currentPlan.value.locations.filter((l) => l.id !== locationId)
   }
 }
+
+function sanitizeFilenamePart(value: string) {
+  const v = value.trim() || "行程"
+  return v.replace(/[\\/:*?"<>|]+/g, "_").slice(0, 40)
+}
+
+function buildItineraryMarkdown(plan: PlanRead) {
+  const date = plan.date
+  const title = plan.title || "行程单"
+  const people = plan.people_count
+  const budget = plan.budget
+  const preferences = plan.preferences ?? ""
+  const remarks = plan.remarks ?? ""
+
+  const groups: Record<"上午" | "下午" | "晚上", LocationRead[]> = { 上午: [], 下午: [], 晚上: [] }
+  for (const loc of plan.locations) {
+    if (loc.time_slot in groups) groups[loc.time_slot as "上午" | "下午" | "晚上"].push(loc)
+  }
+
+  const total = plan.locations.reduce((sum, l) => sum + (Number(l.estimated_cost) || 0), 0)
+  const over = total - Number(budget)
+
+  const lines: string[] = []
+  lines.push(`# ${title}（行程单）`)
+  lines.push("")
+  lines.push(`- 日期：${date}`)
+  lines.push(`- 人数：${people}`)
+  lines.push(`- 预算：¥${Number(budget).toFixed(0)}`)
+  if (preferences) lines.push(`- 偏好：${preferences}`)
+  if (remarks) lines.push(`- 备注：${remarks}`)
+  lines.push(`- 行程预计花费合计：¥${total.toFixed(0)}${over > 0 ? `（超出 ¥${over.toFixed(0)}）` : ""}`)
+  lines.push("")
+
+  lines.push(`---`)
+  lines.push("")
+  for (const slot of ["上午", "下午", "晚上"] as const) {
+    lines.push(`## ${slot}`)
+    lines.push("")
+    if (groups[slot].length === 0) {
+      lines.push(`（暂无地点）`)
+      lines.push("")
+      continue
+    }
+    for (const loc of groups[slot]) {
+      const weather = loc.weather?.ok && loc.weather.summary ? loc.weather.summary : "天气不可用"
+      const note = loc.remarks ? `\n  - 备注：${loc.remarks}` : ""
+      lines.push(`### ${loc.name}`)
+      lines.push(`- 天气：${weather}`)
+      lines.push(`- 坐标：${loc.lat}, ${loc.lng}`)
+      lines.push(`- 预计花费：¥${Number(loc.estimated_cost).toFixed(0)}`)
+      lines.push(`- 停留时长：${Number(loc.duration)} 分钟${note}`)
+      lines.push("")
+    }
+  }
+
+  lines.push(`---`)
+  lines.push("")
+  lines.push(`生成时间：${new Date().toLocaleString()}`)
+  lines.push("")
+  return lines.join("\n")
+}
+
+function downloadMarkdown(filename: string, content: string) {
+  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function exportItinerary() {
+  if (!currentPlan.value) return
+  const titlePart = sanitizeFilenamePart(currentPlan.value.title || "行程单")
+  const datePart = sanitizeFilenamePart(String(currentPlan.value.date || ""))
+  const filename = `行程单-${titlePart}${datePart ? `-${datePart}` : ""}.md`
+  const md = buildItineraryMarkdown(currentPlan.value)
+  downloadMarkdown(filename, md)
+}
 </script>
 
 <template>
@@ -108,6 +200,11 @@ function onLocationDeleted(locationId: number) {
       {{ connectOk }}
     </div>
 
+    <div v-if="budgetExceeded" class="banner banner--warn" role="alert">
+      ⚠️ 警告：当前行程总花费 {{ budgetExceeded.total.toFixed(0) }} 元，已超出预算
+      {{ budgetExceeded.over.toFixed(0) }} 元！
+    </div>
+
     <main class="layout">
       <section class="upper">
         <div class="pane">
@@ -130,6 +227,7 @@ function onLocationDeleted(locationId: number) {
               :locations="locations as any"
               @updated="onLocationUpdated"
               @deleted="onLocationDeleted"
+              @export="exportItinerary"
             />
             <AISummaryCard :plan-id="planId" />
           </div>
@@ -258,6 +356,11 @@ function onLocationDeleted(locationId: number) {
 .banner--ok {
   border-color: rgba(54, 214, 153, 0.35);
   background: rgba(54, 214, 153, 0.12);
+}
+
+.banner--warn {
+  border-color: rgba(255, 90, 116, 0.55);
+  background: rgba(255, 44, 86, 0.16);
 }
 
 .layout {
