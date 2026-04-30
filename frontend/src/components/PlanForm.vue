@@ -17,6 +17,7 @@ type LocationRead = {
   name: string
   lat: number
   lng: number
+  day_index: number
   time_slot: "上午" | "下午" | "晚上"
   estimated_cost: number
   duration: number

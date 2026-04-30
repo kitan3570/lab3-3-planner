@@ -19,6 +19,20 @@ def init_db() -> None:
     from app import models
 
     Base.metadata.create_all(bind=engine)
+    _ensure_locations_day_index_column()
+
+
+def _ensure_locations_day_index_column() -> None:
+    if not settings.database_url.startswith("sqlite"):
+        return
+
+    with engine.connect() as conn:
+        rows = conn.exec_driver_sql("PRAGMA table_info(locations)").fetchall()
+        cols = {row[1] for row in rows}
+        if "day_index" in cols:
+            return
+        conn.exec_driver_sql("ALTER TABLE locations ADD COLUMN day_index INTEGER NOT NULL DEFAULT 1")
+        conn.commit()
 
 
 def get_db() -> Generator:
@@ -27,4 +41,3 @@ def get_db() -> Generator:
         yield db
     finally:
         db.close()
-

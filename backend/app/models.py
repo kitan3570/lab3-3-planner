@@ -32,10 +32,10 @@ class Location(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     lat: Mapped[float] = mapped_column(Float, nullable=False)
     lng: Mapped[float] = mapped_column(Float, nullable=False)
+    day_index: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     time_slot: Mapped[str] = mapped_column(String(20), nullable=False)
     estimated_cost: Mapped[float] = mapped_column(Float, nullable=False)
     duration: Mapped[int] = mapped_column(Integer, nullable=False)
     remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     plan: Mapped[Plan] = relationship(back_populates="locations")
-

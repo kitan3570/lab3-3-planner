@@ -82,6 +82,7 @@ async def add_location(plan_id: int, payload: LocationCreate, db: Session = Depe
         name=payload.name,
         lat=payload.lat,
         lng=payload.lng,
+        day_index=payload.day_index,
         time_slot=payload.time_slot,
         estimated_cost=payload.estimated_cost,
         duration=payload.duration,
@@ -112,6 +113,8 @@ async def update_location(
 
     if payload.time_slot is not None:
         location.time_slot = payload.time_slot
+    if payload.day_index is not None:
+        location.day_index = payload.day_index
     if payload.estimated_cost is not None:
         location.estimated_cost = payload.estimated_cost
     if payload.duration is not None:

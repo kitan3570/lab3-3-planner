@@ -8,6 +8,7 @@ type LocationCreate = {
   name: string
   lat: number
   lng: number
+  day_index: number
   time_slot: TimeSlot
   estimated_cost: number
   duration: number
@@ -20,6 +21,7 @@ type LocationRead = {
   name: string
   lat: number
   lng: number
+  day_index: number
   time_slot: TimeSlot
   estimated_cost: number
   duration: number
@@ -29,6 +31,7 @@ type LocationRead = {
 
 const props = defineProps<{
   planId: number | null
+  dayIndex: number
 }>()
 
 const emit = defineEmits<{
@@ -81,6 +84,7 @@ async function addToPlan() {
     name: selected.value.name,
     lat: selected.value.lat,
     lng: selected.value.lng,
+    day_index: props.dayIndex,
     time_slot: timeSlot.value,
     estimated_cost: Number(estimatedCost.value),
     duration: Number(duration.value),

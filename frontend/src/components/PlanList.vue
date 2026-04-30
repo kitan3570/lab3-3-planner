@@ -76,15 +76,15 @@ async function removePlan(id: number) {
     <div class="backdrop" @click="close"></div>
     <section class="panel">
       <header class="panel__header">
-        <div class="panel__kicker">Lobby</div>
+        <div class="panel__kicker">History</div>
         <div class="panel__titleRow">
-          <h2 class="panel__title">系统大厅 · 历史规划</h2>
+          <h2 class="panel__title">历史记录 · 规划列表</h2>
           <div class="panel__actions">
             <button class="btn btn--ghost" type="button" :disabled="loading" @click="load">刷新</button>
             <button class="iconBtn" type="button" @click="close" title="关闭">×</button>
           </div>
         </div>
-        <p class="panel__subtitle">打开一个历史规划继续编辑，或删除不需要的规划。</p>
+        <p class="panel__subtitle">打开历史规划继续编辑，或删除不需要的规划。</p>
       </header>
 
       <div class="panel__body">
@@ -359,4 +359,3 @@ async function removePlan(id: number) {
   }
 }
 </style>
-

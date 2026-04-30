@@ -16,6 +16,8 @@ const connectOk = ref<string | null>(null)
 const refreshing = ref(false)
 const refreshError = ref<string | null>(null)
 const hallOpen = ref(false)
+const selectedDayIndex = ref(1)
+const dayCount = ref(1)
 
 const planId = computed(() => currentPlan.value?.id ?? null)
 const locations = computed(() => currentPlan.value?.locations ?? [])
@@ -50,7 +52,9 @@ async function refreshPlan() {
   try {
     refreshing.value = true
     refreshError.value = null
-    currentPlan.value = await apiFetch<PlanRead>(`/plans/${planId.value}`)
+    const plan = await apiFetch<PlanRead>(`/plans/${planId.value}`)
+    currentPlan.value = plan
+    syncDayCountFromPlan(plan)
   } catch {
     refreshError.value = "刷新规划失败"
     return
@@ -61,7 +65,10 @@ async function refreshPlan() {
 
 async function openPlan(planId: number) {
   try {
-    currentPlan.value = await apiFetch<PlanRead>(`/plans/${planId}`)
+    const plan = await apiFetch<PlanRead>(`/plans/${planId}`)
+    currentPlan.value = plan
+    selectedDayIndex.value = 1
+    dayCount.value = Math.max(1, maxDayIndex(plan))
     hallOpen.value = false
   } catch (e) {
     console.error("open plan failed", e)
@@ -75,10 +82,14 @@ function onPlanDeleted(id: number) {
 
 function onCreated(plan: PlanRead) {
   currentPlan.value = plan
+  selectedDayIndex.value = 1
+  dayCount.value = Math.max(1, maxDayIndex(plan))
 }
 
 function onReset() {
   currentPlan.value = null
+  selectedDayIndex.value = 1
+  dayCount.value = 1
 }
 
 async function onLocationAdded(location: LocationRead) {
@@ -106,6 +117,61 @@ function onLocationDeleted(locationId: number) {
   }
 }
 
+function maxDayIndex(plan: PlanRead) {
+  return plan.locations.reduce((m, l) => Math.max(m, Number((l as any).day_index) || 1), 1)
+}
+
+function syncDayCountFromPlan(plan: PlanRead | null) {
+  if (!plan) {
+    dayCount.value = 1
+    selectedDayIndex.value = 1
+    return
+  }
+  dayCount.value = Math.max(dayCount.value, maxDayIndex(plan))
+  if (selectedDayIndex.value > dayCount.value) selectedDayIndex.value = dayCount.value
+  if (selectedDayIndex.value < 1) selectedDayIndex.value = 1
+}
+
+function addDay() {
+  dayCount.value = Math.max(1, dayCount.value + 1)
+  selectedDayIndex.value = dayCount.value
+}
+
+function changeDay(day: number) {
+  selectedDayIndex.value = Math.min(Math.max(1, day), dayCount.value)
+}
+
+async function deleteDay(day: number) {
+  if (!currentPlan.value) return
+  if (dayCount.value <= 1) return
+  const ok = window.confirm(`确定删除第 ${day} 天吗？该天的地点会一并删除，后续天会自动前移。`)
+  if (!ok) return
+
+  const plan = currentPlan.value
+  const targets = plan.locations.filter((l) => (Number((l as any).day_index) || 1) === day)
+  const after = plan.locations.filter((l) => (Number((l as any).day_index) || 1) > day)
+
+  try {
+    for (const loc of targets) {
+      await apiFetch<void>(`/plans/${plan.id}/locations/${loc.id}`, { method: "DELETE" })
+    }
+    for (const loc of after) {
+      const oldDay = Number((loc as any).day_index) || 1
+      await apiFetch<any>(`/plans/${plan.id}/locations/${loc.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ day_index: oldDay - 1 })
+      })
+    }
+
+    dayCount.value = Math.max(1, dayCount.value - 1)
+    selectedDayIndex.value = Math.min(selectedDayIndex.value, dayCount.value)
+    await refreshPlan()
+  } catch (e) {
+    console.error("delete day failed", e)
+    connectError.value = e instanceof ApiError ? e.message : "删除当天失败"
+  }
+}
+
 function sanitizeFilenamePart(value: string) {
   const v = value.trim() || "行程"
   return v.replace(/[\\/:*?"<>|]+/g, "_").slice(0, 40)
@@ -119,9 +185,12 @@ function buildItineraryMarkdown(plan: PlanRead) {
   const preferences = plan.preferences ?? ""
   const remarks = plan.remarks ?? ""
 
-  const groups: Record<"上午" | "下午" | "晚上", LocationRead[]> = { 上午: [], 下午: [], 晚上: [] }
+  const byDay = new Map<number, LocationRead[]>()
   for (const loc of plan.locations) {
-    if (loc.time_slot in groups) groups[loc.time_slot as "上午" | "下午" | "晚上"].push(loc)
+    const day = Number((loc as any).day_index) || 1
+    const arr = byDay.get(day) ?? []
+    arr.push(loc)
+    byDay.set(day, arr)
   }
 
   const total = plan.locations.reduce((sum, l) => sum + (Number(l.estimated_cost) || 0), 0)
@@ -140,23 +209,32 @@ function buildItineraryMarkdown(plan: PlanRead) {
 
   lines.push(`---`)
   lines.push("")
-  for (const slot of ["上午", "下午", "晚上"] as const) {
-    lines.push(`## ${slot}`)
+  const days = Array.from(byDay.keys()).sort((a, b) => a - b)
+  for (const day of days) {
+    lines.push(`## 第 ${day} 天`)
     lines.push("")
-    if (groups[slot].length === 0) {
-      lines.push(`（暂无地点）`)
+    const locs = byDay.get(day) ?? []
+    const slotGroups: Record<"上午" | "下午" | "晚上", LocationRead[]> = { 上午: [], 下午: [], 晚上: [] }
+    for (const loc of locs) slotGroups[loc.time_slot].push(loc)
+
+    for (const slot of ["上午", "下午", "晚上"] as const) {
+      lines.push(`### ${slot}`)
       lines.push("")
-      continue
-    }
-    for (const loc of groups[slot]) {
-      const weather = loc.weather?.ok && loc.weather.summary ? loc.weather.summary : "天气不可用"
-      const note = loc.remarks ? `\n  - 备注：${loc.remarks}` : ""
-      lines.push(`### ${loc.name}`)
-      lines.push(`- 天气：${weather}`)
-      lines.push(`- 坐标：${loc.lat}, ${loc.lng}`)
-      lines.push(`- 预计花费：¥${Number(loc.estimated_cost).toFixed(0)}`)
-      lines.push(`- 停留时长：${Number(loc.duration)} 分钟${note}`)
-      lines.push("")
+      if (slotGroups[slot].length === 0) {
+        lines.push(`（暂无地点）`)
+        lines.push("")
+        continue
+      }
+      for (const loc of slotGroups[slot]) {
+        const weather = loc.weather?.ok && loc.weather.summary ? loc.weather.summary : "天气不可用"
+        const note = loc.remarks ? `\n  - 备注：${loc.remarks}` : ""
+        lines.push(`#### ${loc.name}`)
+        lines.push(`- 天气：${weather}`)
+        lines.push(`- 坐标：${loc.lat}, ${loc.lng}`)
+        lines.push(`- 预计花费：¥${Number(loc.estimated_cost).toFixed(0)}`)
+        lines.push(`- 停留时长：${Number(loc.duration)} 分钟${note}`)
+        lines.push("")
+      }
     }
   }
 
@@ -201,7 +279,7 @@ function exportItinerary() {
       </div>
 
       <div class="toolbar">
-        <button class="pill" type="button" @click="hallOpen = true">系统大厅</button>
+        <button class="pill" type="button" @click="hallOpen = true">历史记录</button>
         <button class="pill" type="button" @click="checkBackend" :disabled="connecting">
           {{ connecting ? "检查中…" : "检查后端连接" }}
         </button>
@@ -228,7 +306,7 @@ function exportItinerary() {
           <PlanForm @created="onCreated" @reset="onReset" />
         </div>
         <div class="pane">
-          <MapSelector :plan-id="planId" @added="onLocationAdded" />
+          <MapSelector :plan-id="planId" :day-index="selectedDayIndex" @added="onLocationAdded" />
         </div>
       </section>
 
@@ -242,9 +320,14 @@ function exportItinerary() {
             <Itinerary
               :plan-id="planId"
               :locations="locations as any"
+              :day-index="selectedDayIndex"
+              :day-count="dayCount"
               @updated="onLocationUpdated"
               @deleted="onLocationDeleted"
               @export="exportItinerary"
+              @change-day="changeDay"
+              @add-day="addDay"
+              @delete-day="deleteDay"
             />
             <AISummaryCard :plan-id="planId" />
           </div>

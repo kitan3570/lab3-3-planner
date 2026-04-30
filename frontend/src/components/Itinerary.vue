@@ -16,6 +16,7 @@ export type LocationRead = {
   name: string
   lat: number
   lng: number
+  day_index: number
   time_slot: TimeSlot
   estimated_cost: number
   duration: number
@@ -24,6 +25,7 @@ export type LocationRead = {
 }
 
 type LocationUpdate = {
+  day_index?: number | null
   time_slot?: TimeSlot | null
   estimated_cost?: number | null
   duration?: number | null
@@ -33,12 +35,17 @@ type LocationUpdate = {
 const props = defineProps<{
   planId: number
   locations: LocationRead[]
+  dayIndex: number
+  dayCount: number
 }>()
 
 const emit = defineEmits<{
   (e: "updated", location: LocationRead): void
   (e: "deleted", locationId: number): void
   (e: "export"): void
+  (e: "changeDay", dayIndex: number): void
+  (e: "addDay"): void
+  (e: "deleteDay", dayIndex: number): void
 }>()
 
 const drafts = reactive<Record<number, LocationUpdate & { name: string; lat: number; lng: number }>>({})
@@ -72,9 +79,13 @@ watch(
   { immediate: true, deep: true }
 )
 
+const dayLocations = computed(() => {
+  return props.locations.filter((l) => (Number(l.day_index) || 1) === props.dayIndex)
+})
+
 const grouped = computed(() => {
   const bucket: Record<TimeSlot, LocationRead[]> = { 上午: [], 下午: [], 晚上: [] }
-  for (const loc of props.locations) bucket[loc.time_slot].push(loc)
+  for (const loc of dayLocations.value) bucket[loc.time_slot].push(loc)
   return bucket
 })
 
@@ -139,6 +150,34 @@ async function remove(locationId: number) {
       </div>
       <p class="board__subtitle">按“上午 / 下午 / 晚上”分组；修改后会自动同步到后端。</p>
     </header>
+
+    <div class="tabs" role="tablist" aria-label="按天查看行程">
+      <button
+        v-for="d in dayCount"
+        :key="d"
+        class="tab"
+        type="button"
+        role="tab"
+        :aria-selected="d === dayIndex"
+        :data-active="d === dayIndex"
+        @click="emit('changeDay', d)"
+      >
+        第 {{ d }} 天
+      </button>
+      <button class="tab tab--add" type="button" role="tab" aria-selected="false" @click="emit('addDay')">
+        + 新增一天
+      </button>
+      <button
+        v-if="dayCount > 1"
+        class="tab tab--danger"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        @click="emit('deleteDay', dayIndex)"
+      >
+        删除当天
+      </button>
+    </div>
 
     <div class="cols">
       <section v-for="slot in (['上午', '下午', '晚上'] as const)" :key="slot" class="col">
@@ -319,6 +358,57 @@ async function remove(locationId: number) {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.66);
   line-height: 1.5;
+}
+
+.tabs {
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab {
+  border-radius: 999px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+}
+
+.tab:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.tab[data-active="true"] {
+  border-color: rgba(83, 163, 255, 0.45);
+  background: rgba(83, 163, 255, 0.14);
+  box-shadow: 0 12px 30px rgba(83, 163, 255, 0.14);
+}
+
+.tab--add {
+  border-style: dashed;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tab--danger {
+  border-color: rgba(255, 90, 116, 0.42);
+  background: rgba(255, 44, 86, 0.12);
+  color: rgba(255, 205, 214, 0.9);
+}
+
+.tab--danger:hover {
+  border-color: rgba(255, 90, 116, 0.55);
+  background: rgba(255, 44, 86, 0.16);
 }
 
 .cols {

@@ -38,6 +38,7 @@ class LocationCreate(BaseModel):
     name: str
     lat: float
     lng: float
+    day_index: int = 1
     time_slot: TimeSlot
     estimated_cost: float
     duration: int
@@ -45,6 +46,7 @@ class LocationCreate(BaseModel):
 
 
 class LocationUpdate(BaseModel):
+    day_index: int | None = None
     time_slot: TimeSlot | None = None
     estimated_cost: float | None = None
     duration: int | None = None
@@ -59,6 +61,7 @@ class LocationRead(BaseModel):
     name: str
     lat: float
     lng: float
+    day_index: int
     time_slot: TimeSlot
     estimated_cost: float
     duration: int
