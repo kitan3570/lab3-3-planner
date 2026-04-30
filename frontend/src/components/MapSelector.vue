@@ -38,6 +38,8 @@ const selected = ref<{
   name: string
   lat: number
   lng: number
+  xPct: number
+  yPct: number
 } | null>(null)
 
 const timeSlot = ref<TimeSlot>("上午")
@@ -59,7 +61,13 @@ function onMapClick(e: MouseEvent) {
   const lat = Number((39.9 - (y - 0.5) * 0.6).toFixed(6))
   const lng = Number((116.4 + (x - 0.5) * 0.8).toFixed(6))
 
-  selected.value = { name: `选点 ${lng},${lat}`, lat, lng }
+  selected.value = {
+    name: `选点 ${lng},${lat}`,
+    lat,
+    lng,
+    xPct: Number((x * 100).toFixed(2)),
+    yPct: Number((y * 100).toFixed(2))
+  }
   errorMessage.value = null
 }
 
@@ -85,7 +93,8 @@ async function addToPlan() {
     })
     emit("added", location)
   } catch (e) {
-    errorMessage.value = e instanceof ApiError ? e.message : "加入失败，请稍后重试"
+    console.error("add location failed", e)
+    errorMessage.value = e instanceof ApiError ? e.message : `加入失败: ${e instanceof Error ? e.message : String(e)}`
   } finally {
     adding.value = false
   }
@@ -105,7 +114,11 @@ async function addToPlan() {
 
     <div class="map" @click="onMapClick" role="button" tabindex="0">
       <div class="map__grid" aria-hidden="true"></div>
-      <div v-if="selected" class="pin" :style="{ left: '50%', top: '50%' }">
+      <div
+        v-if="selected"
+        class="pin"
+        :style="{ left: `${selected.xPct}%`, top: `${selected.yPct}%` }"
+      >
         <div class="pin__dot"></div>
         <div class="pin__label">
           <div class="pin__name">{{ selected.name }}</div>
@@ -169,6 +182,7 @@ async function addToPlan() {
   box-shadow: 0 24px 60px rgba(7, 12, 28, 0.22);
   backdrop-filter: blur(10px);
   overflow: hidden;
+  color: rgba(10, 14, 26, 0.95);
 }
 
 .card__header {
@@ -300,13 +314,14 @@ async function addToPlan() {
 
 .panel__row {
   display: grid;
-  grid-template-columns: 0.8fr 0.8fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
 }
 
 .field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .field--full {
@@ -322,6 +337,7 @@ async function addToPlan() {
 
 .field__input {
   width: 100%;
+  min-width: 0;
   border-radius: 12px;
   padding: 11px 12px;
   border: 1px solid rgba(12, 16, 32, 0.12);

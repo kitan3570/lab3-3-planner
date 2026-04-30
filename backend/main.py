@@ -11,7 +11,8 @@ app = FastAPI(title="Lab 3-2 智能出行规划器 API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origin_regex=r"http://localhost:\d+|http://127\.0\.0\.1:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +30,7 @@ def health() -> dict:
 
 
 @app.post("/api/plans", response_model=PlanRead)
+@app.post("/api/plans/", response_model=PlanRead, include_in_schema=False)
 def create_plan(payload: PlanCreate, db: Session = Depends(get_db)) -> Plan:
     plan = Plan(
         title=payload.title,
@@ -46,6 +48,7 @@ def create_plan(payload: PlanCreate, db: Session = Depends(get_db)) -> Plan:
 
 
 @app.get("/api/plans/{plan_id}", response_model=PlanRead)
+@app.get("/api/plans/{plan_id}/", response_model=PlanRead, include_in_schema=False)
 def get_plan(plan_id: int, db: Session = Depends(get_db)) -> Plan:
     stmt = select(Plan).options(joinedload(Plan.locations)).where(Plan.id == plan_id)
     plan = db.execute(stmt).scalars().first()
@@ -55,6 +58,7 @@ def get_plan(plan_id: int, db: Session = Depends(get_db)) -> Plan:
 
 
 @app.post("/api/plans/{plan_id}/locations", response_model=LocationRead)
+@app.post("/api/plans/{plan_id}/locations/", response_model=LocationRead, include_in_schema=False)
 def add_location(plan_id: int, payload: LocationCreate, db: Session = Depends(get_db)) -> Location:
     plan = db.get(Plan, plan_id)
     if not plan:

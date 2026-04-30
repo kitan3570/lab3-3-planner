@@ -9,6 +9,7 @@ type LocationRead = PlanRead["locations"][number]
 const currentPlan = ref<PlanRead | null>(null)
 const connecting = ref(false)
 const connectError = ref<string | null>(null)
+const connectOk = ref<string | null>(null)
 
 const planId = computed(() => currentPlan.value?.id ?? null)
 const locations = computed(() => currentPlan.value?.locations ?? [])
@@ -16,9 +17,12 @@ const locations = computed(() => currentPlan.value?.locations ?? [])
 async function checkBackend() {
   connecting.value = true
   connectError.value = null
+  connectOk.value = null
   try {
     await apiFetch<{ ok: boolean }>("/health")
+    connectOk.value = "后端连接正常（/api/health）"
   } catch (e) {
+    console.error("health check failed", e)
     connectError.value = e instanceof ApiError ? e.message : "后端连接失败"
   } finally {
     connecting.value = false
@@ -75,6 +79,10 @@ async function onLocationAdded(location: LocationRead) {
       {{ connectError }}
     </div>
 
+    <div v-else-if="connectOk" class="banner banner--ok" role="status">
+      {{ connectOk }}
+    </div>
+
     <main class="main">
       <div class="left">
         <PlanForm @created="onCreated" @reset="onReset" />
@@ -117,6 +125,18 @@ async function onLocationAdded(location: LocationRead) {
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;600;700&display=swap");
+
+:global(*),
+:global(*::before),
+:global(*::after) {
+  box-sizing: border-box;
+}
+
+:global(html),
+:global(body) {
+  height: 100%;
+  margin: 0;
+}
 
 .page {
   min-height: 100vh;
@@ -212,10 +232,15 @@ async function onLocationAdded(location: LocationRead) {
   color: rgba(255, 255, 255, 0.92);
 }
 
+.banner--ok {
+  border-color: rgba(54, 214, 153, 0.35);
+  background: rgba(54, 214, 153, 0.12);
+}
+
 .main {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 16px;
+  grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.2fr);
+  gap: 18px;
   max-width: 1200px;
   margin: 0 auto;
   align-items: start;

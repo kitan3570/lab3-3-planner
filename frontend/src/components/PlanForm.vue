@@ -76,7 +76,8 @@ async function submit() {
     })
     emit("created", plan)
   } catch (e) {
-    errorMessage.value = e instanceof ApiError ? e.message : "保存失败，请稍后重试"
+    console.error("create plan failed", e)
+    errorMessage.value = e instanceof ApiError ? e.message : `保存失败: ${e instanceof Error ? e.message : String(e)}`
   } finally {
     loading.value = false
   }
@@ -159,6 +160,7 @@ function reset() {
   box-shadow: 0 24px 60px rgba(7, 12, 28, 0.22);
   backdrop-filter: blur(10px);
   overflow: hidden;
+  color: rgba(10, 14, 26, 0.95);
 }
 
 .card__header {
@@ -199,13 +201,14 @@ function reset() {
 
 .grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
 }
 
 .field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .field--full {
@@ -221,6 +224,7 @@ function reset() {
 
 .field__input {
   width: 100%;
+  min-width: 0;
   border-radius: 12px;
   padding: 11px 12px;
   border: 1px solid rgba(12, 16, 32, 0.12);
