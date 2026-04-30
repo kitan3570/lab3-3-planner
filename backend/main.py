@@ -1,11 +1,11 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db, init_db
 from app.models import Location, Plan
-from app.schemas import LocationCreate, LocationRead, PlanCreate, PlanRead
+from app.schemas import LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead
 from app.third_party.clients.weather_client import get_weather_summary
 
 app = FastAPI(title="Lab 3-2 智能出行规划器 API")
@@ -83,6 +83,50 @@ async def add_location(plan_id: int, payload: LocationCreate, db: Session = Depe
     db.refresh(location)
     location.weather = await get_weather_summary(lat=location.lat, lng=location.lng)
     return location
+
+
+@app.put("/api/plans/{plan_id}/locations/{location_id}", response_model=LocationRead)
+@app.put(
+    "/api/plans/{plan_id}/locations/{location_id}/",
+    response_model=LocationRead,
+    include_in_schema=False,
+)
+async def update_location(
+    plan_id: int,
+    location_id: int,
+    payload: LocationUpdate,
+    db: Session = Depends(get_db),
+) -> Location:
+    location = db.get(Location, location_id)
+    if not location or location.plan_id != plan_id:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    if payload.time_slot is not None:
+        location.time_slot = payload.time_slot
+    if payload.estimated_cost is not None:
+        location.estimated_cost = payload.estimated_cost
+    if payload.duration is not None:
+        location.duration = payload.duration
+    if payload.remarks is not None:
+        location.remarks = payload.remarks
+
+    db.add(location)
+    db.commit()
+    db.refresh(location)
+    location.weather = await get_weather_summary(lat=location.lat, lng=location.lng)
+    return location
+
+
+@app.delete("/api/plans/{plan_id}/locations/{location_id}", status_code=204)
+@app.delete("/api/plans/{plan_id}/locations/{location_id}/", status_code=204, include_in_schema=False)
+def delete_location(plan_id: int, location_id: int, db: Session = Depends(get_db)) -> Response:
+    location = db.get(Location, location_id)
+    if not location or location.plan_id != plan_id:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    db.delete(location)
+    db.commit()
+    return Response(status_code=204)
 
 
 __all__ = ["app"]

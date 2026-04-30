@@ -32,6 +32,13 @@ class LocationCreate(BaseModel):
     remarks: str | None = None
 
 
+class LocationUpdate(BaseModel):
+    time_slot: TimeSlot | None = None
+    estimated_cost: float | None = None
+    duration: int | None = None
+    remarks: str | None = None
+
+
 class LocationRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

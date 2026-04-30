@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { ApiError, apiFetch } from "./lib/api"
+import Itinerary, { type LocationRead as ItineraryLocation } from "./components/Itinerary.vue"
 import MapSelector from "./components/MapSelector.vue"
 import PlanForm, { type PlanRead } from "./components/PlanForm.vue"
 
@@ -61,6 +62,22 @@ async function onLocationAdded(location: LocationRead) {
   }
   await refreshPlan()
 }
+
+function onLocationUpdated(location: ItineraryLocation) {
+  if (!currentPlan.value) return
+  currentPlan.value = {
+    ...currentPlan.value,
+    locations: currentPlan.value.locations.map((l) => (l.id === location.id ? (location as any) : l))
+  }
+}
+
+function onLocationDeleted(locationId: number) {
+  if (!currentPlan.value) return
+  currentPlan.value = {
+    ...currentPlan.value,
+    locations: currentPlan.value.locations.filter((l) => l.id !== locationId)
+  }
+}
 </script>
 
 <template>
@@ -93,48 +110,16 @@ async function onLocationAdded(location: LocationRead) {
     <main class="main">
       <div class="left">
         <PlanForm @created="onCreated" @reset="onReset" />
-        <section class="list cardList" v-if="planId">
-          <header class="list__header">
-            <h3 class="list__title">已加入地点</h3>
-            <div class="list__meta">
-              <span>{{ locations.length }} 个</span>
-              <span v-if="refreshing" class="dot">同步天气中…</span>
-            </div>
-          </header>
-
-          <div v-if="refreshError" class="list__error">{{ refreshError }}</div>
-
-          <div v-if="locations.length === 0" class="list__empty">还没有地点，去右侧点一下地图。</div>
-
-          <ul v-else class="items">
-            <li v-for="loc in locations" :key="loc.id" class="item">
-              <div class="item__main">
-                <div class="item__name">{{ loc.name }}</div>
-                <div class="item__sub">
-                  <span class="tag">{{ loc.time_slot }}</span>
-                  <span
-                    v-if="loc.weather?.ok && loc.weather.summary"
-                    class="weather"
-                    :title="loc.weather.summary"
-                  >
-                    {{ loc.weather.summary }}
-                  </span>
-                  <span v-else-if="loc.weather && !loc.weather.ok" class="weather weather--down" title="天气服务不可用">
-                    天气不可用
-                  </span>
-                  <span v-else class="weather weather--loading" title="天气获取中">
-                    天气获取中…
-                  </span>
-                  <span class="muted">{{ loc.lat }}, {{ loc.lng }}</span>
-                </div>
-              </div>
-              <div class="item__aside">
-                <div class="item__cost">¥{{ loc.estimated_cost }}</div>
-                <div class="item__dur">{{ loc.duration }} min</div>
-              </div>
-            </li>
-          </ul>
-        </section>
+        <div v-if="planId" class="stack">
+          <div v-if="refreshError" class="stack__error">{{ refreshError }}</div>
+          <div v-if="refreshing" class="stack__hint">同步天气中…</div>
+          <Itinerary
+            :plan-id="planId"
+            :locations="locations as any"
+            @updated="onLocationUpdated"
+            @deleted="onLocationDeleted"
+          />
+        </div>
       </div>
 
       <div class="right">
@@ -277,145 +262,21 @@ async function onLocationAdded(location: LocationRead) {
   gap: 16px;
 }
 
-.cardList {
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 24px 60px rgba(7, 12, 28, 0.22);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-.list__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.list__title {
-  margin: 0;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-}
-
-.list__meta {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.62);
-}
-
-.list__empty {
-  padding: 16px 18px 18px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
-}
-
-.list__error {
-  padding: 12px 18px 0;
-  color: rgba(255, 144, 163, 0.95);
-  font-size: 12px;
-}
-
-.items {
-  list-style: none;
-  padding: 10px 10px 14px;
-  margin: 0;
+.stack {
   display: grid;
   gap: 10px;
 }
 
-.item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.item__name {
-  font-weight: 750;
-  letter-spacing: -0.01em;
-}
-
-.item__sub {
-  margin-top: 6px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.dot {
-  position: relative;
-  padding-left: 14px;
+.stack__hint {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.68);
+  padding: 0 2px;
 }
 
-.dot::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(54, 214, 153, 0.9);
-  box-shadow: 0 0 0 5px rgba(54, 214, 153, 0.14);
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+.stack__error {
   font-size: 12px;
-  font-weight: 700;
-}
-
-.weather {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  background: rgba(54, 214, 153, 0.12);
-  color: rgba(214, 255, 236, 0.92);
-}
-
-.weather--down {
-  background: rgba(255, 90, 116, 0.12);
-  color: rgba(255, 195, 205, 0.92);
-}
-
-.weather--loading {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.item__aside {
-  text-align: right;
-  min-width: 92px;
-}
-
-.item__cost {
-  font-weight: 800;
-}
-
-.item__dur {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.64);
+  color: rgba(255, 144, 163, 0.95);
+  padding: 0 2px;
 }
 
 .muted {
