@@ -1,4 +1,3 @@
-from app.schemas import LocationCreate, LocationRead, PlanCreate, PlanRead, TimeSlot
+from app.schemas import LocationCreate, LocationRead, PlanCreate, PlanRead, TimeSlot, WeatherInfo
 
-__all__ = ["PlanCreate", "PlanRead", "LocationCreate", "LocationRead", "TimeSlot"]
-
+__all__ = ["PlanCreate", "PlanRead", "LocationCreate", "LocationRead", "TimeSlot", "WeatherInfo"]

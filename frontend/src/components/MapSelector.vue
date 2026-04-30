@@ -24,6 +24,7 @@ type LocationRead = {
   estimated_cost: number
   duration: number
   remarks?: string | null
+  weather?: { ok: boolean; summary?: string | null; error?: string | null } | null
 }
 
 const props = defineProps<{

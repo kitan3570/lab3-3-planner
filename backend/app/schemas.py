@@ -7,6 +7,12 @@ from pydantic import BaseModel, ConfigDict
 TimeSlot = Literal["上午", "下午", "晚上"]
 
 
+class WeatherInfo(BaseModel):
+    ok: bool
+    summary: str | None = None
+    error: str | None = None
+
+
 class PlanCreate(BaseModel):
     title: str
     date: date
@@ -38,6 +44,7 @@ class LocationRead(BaseModel):
     estimated_cost: float
     duration: int
     remarks: str | None
+    weather: WeatherInfo | None = None
 
 
 class PlanRead(BaseModel):
@@ -51,4 +58,3 @@ class PlanRead(BaseModel):
     preferences: str | None
     remarks: str | None
     locations: list[LocationRead]
-

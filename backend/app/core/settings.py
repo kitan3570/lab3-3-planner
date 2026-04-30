@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,6 +10,9 @@ class Settings(BaseSettings):
 
     weather_api_key: str | None = None
     llm_api_key: str | None = None
+
+    qweather_host: str | None = Field(default=None, validation_alias=AliasChoices("YOUR_QWEATHER_HOST", "QWEATHER_HOST"))
+    qweather_key: str | None = Field(default=None, validation_alias=AliasChoices("YOUR_QWEATHER_KEY", "QWEATHER_KEY"))
 
 
 settings = Settings()

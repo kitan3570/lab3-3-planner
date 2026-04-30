@@ -10,6 +10,8 @@ const currentPlan = ref<PlanRead | null>(null)
 const connecting = ref(false)
 const connectError = ref<string | null>(null)
 const connectOk = ref<string | null>(null)
+const refreshing = ref(false)
+const refreshError = ref<string | null>(null)
 
 const planId = computed(() => currentPlan.value?.id ?? null)
 const locations = computed(() => currentPlan.value?.locations ?? [])
@@ -32,9 +34,14 @@ async function checkBackend() {
 async function refreshPlan() {
   if (!planId.value) return
   try {
+    refreshing.value = true
+    refreshError.value = null
     currentPlan.value = await apiFetch<PlanRead>(`/plans/${planId.value}`)
   } catch {
+    refreshError.value = "刷新规划失败"
     return
+  } finally {
+    refreshing.value = false
   }
 }
 
@@ -89,8 +96,13 @@ async function onLocationAdded(location: LocationRead) {
         <section class="list cardList" v-if="planId">
           <header class="list__header">
             <h3 class="list__title">已加入地点</h3>
-            <div class="list__meta">{{ locations.length }} 个</div>
+            <div class="list__meta">
+              <span>{{ locations.length }} 个</span>
+              <span v-if="refreshing" class="dot">同步天气中…</span>
+            </div>
           </header>
+
+          <div v-if="refreshError" class="list__error">{{ refreshError }}</div>
 
           <div v-if="locations.length === 0" class="list__empty">还没有地点，去右侧点一下地图。</div>
 
@@ -100,6 +112,19 @@ async function onLocationAdded(location: LocationRead) {
                 <div class="item__name">{{ loc.name }}</div>
                 <div class="item__sub">
                   <span class="tag">{{ loc.time_slot }}</span>
+                  <span
+                    v-if="loc.weather?.ok && loc.weather.summary"
+                    class="weather"
+                    :title="loc.weather.summary"
+                  >
+                    {{ loc.weather.summary }}
+                  </span>
+                  <span v-else-if="loc.weather && !loc.weather.ok" class="weather weather--down" title="天气服务不可用">
+                    天气不可用
+                  </span>
+                  <span v-else class="weather weather--loading" title="天气获取中">
+                    天气获取中…
+                  </span>
                   <span class="muted">{{ loc.lat }}, {{ loc.lng }}</span>
                 </div>
               </div>
@@ -286,6 +311,12 @@ async function onLocationAdded(location: LocationRead) {
   font-size: 13px;
 }
 
+.list__error {
+  padding: 12px 18px 0;
+  color: rgba(255, 144, 163, 0.95);
+  font-size: 12px;
+}
+
 .items {
   list-style: none;
   padding: 10px 10px 14px;
@@ -318,6 +349,26 @@ async function onLocationAdded(location: LocationRead) {
   flex-wrap: wrap;
 }
 
+.dot {
+  position: relative;
+  padding-left: 14px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.dot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(54, 214, 153, 0.9);
+  box-shadow: 0 0 0 5px rgba(54, 214, 153, 0.14);
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
@@ -327,6 +378,29 @@ async function onLocationAdded(location: LocationRead) {
   border: 1px solid rgba(255, 255, 255, 0.16);
   font-size: 12px;
   font-weight: 700;
+}
+
+.weather {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: rgba(54, 214, 153, 0.12);
+  color: rgba(214, 255, 236, 0.92);
+}
+
+.weather--down {
+  background: rgba(255, 90, 116, 0.12);
+  color: rgba(255, 195, 205, 0.92);
+}
+
+.weather--loading {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .item__aside {

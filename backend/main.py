@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db.database import get_db, init_db
 from app.models import Location, Plan
 from app.schemas import LocationCreate, LocationRead, PlanCreate, PlanRead
+from app.third_party.clients.weather_client import get_weather_summary
 
 app = FastAPI(title="Lab 3-2 智能出行规划器 API")
 
@@ -49,17 +50,20 @@ def create_plan(payload: PlanCreate, db: Session = Depends(get_db)) -> Plan:
 
 @app.get("/api/plans/{plan_id}", response_model=PlanRead)
 @app.get("/api/plans/{plan_id}/", response_model=PlanRead, include_in_schema=False)
-def get_plan(plan_id: int, db: Session = Depends(get_db)) -> Plan:
+async def get_plan(plan_id: int, db: Session = Depends(get_db)) -> Plan:
     stmt = select(Plan).options(joinedload(Plan.locations)).where(Plan.id == plan_id)
     plan = db.execute(stmt).scalars().first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
+
+    for loc in plan.locations:
+        loc.weather = await get_weather_summary(lat=loc.lat, lng=loc.lng)
     return plan
 
 
 @app.post("/api/plans/{plan_id}/locations", response_model=LocationRead)
 @app.post("/api/plans/{plan_id}/locations/", response_model=LocationRead, include_in_schema=False)
-def add_location(plan_id: int, payload: LocationCreate, db: Session = Depends(get_db)) -> Location:
+async def add_location(plan_id: int, payload: LocationCreate, db: Session = Depends(get_db)) -> Location:
     plan = db.get(Plan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -77,6 +81,7 @@ def add_location(plan_id: int, payload: LocationCreate, db: Session = Depends(ge
     db.add(location)
     db.commit()
     db.refresh(location)
+    location.weather = await get_weather_summary(lat=location.lat, lng=location.lng)
     return location
 
 
