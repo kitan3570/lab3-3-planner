@@ -4,6 +4,7 @@ import { ApiError, apiFetch } from "./lib/api"
 import AISummaryCard from "./components/AISummaryCard.vue"
 import Itinerary, { type LocationRead as ItineraryLocation } from "./components/Itinerary.vue"
 import MapSelector from "./components/MapSelector.vue"
+import PlanList from "./components/PlanList.vue"
 import PlanForm, { type PlanRead } from "./components/PlanForm.vue"
 
 type LocationRead = PlanRead["locations"][number]
@@ -14,6 +15,7 @@ const connectError = ref<string | null>(null)
 const connectOk = ref<string | null>(null)
 const refreshing = ref(false)
 const refreshError = ref<string | null>(null)
+const hallOpen = ref(false)
 
 const planId = computed(() => currentPlan.value?.id ?? null)
 const locations = computed(() => currentPlan.value?.locations ?? [])
@@ -55,6 +57,20 @@ async function refreshPlan() {
   } finally {
     refreshing.value = false
   }
+}
+
+async function openPlan(planId: number) {
+  try {
+    currentPlan.value = await apiFetch<PlanRead>(`/plans/${planId}`)
+    hallOpen.value = false
+  } catch (e) {
+    console.error("open plan failed", e)
+    connectError.value = e instanceof ApiError ? e.message : "打开规划失败"
+  }
+}
+
+function onPlanDeleted(id: number) {
+  if (currentPlan.value?.id === id) currentPlan.value = null
 }
 
 function onCreated(plan: PlanRead) {
@@ -185,6 +201,7 @@ function exportItinerary() {
       </div>
 
       <div class="toolbar">
+        <button class="pill" type="button" @click="hallOpen = true">系统大厅</button>
         <button class="pill" type="button" @click="checkBackend" :disabled="connecting">
           {{ connecting ? "检查中…" : "检查后端连接" }}
         </button>
@@ -241,6 +258,8 @@ function exportItinerary() {
     <footer class="foot">
       <span class="muted">API Base: /api</span>
     </footer>
+
+    <PlanList :open="hallOpen" :current-plan-id="planId" @close="hallOpen = false" @open-plan="openPlan" @deleted="onPlanDeleted" />
   </div>
 </template>
 

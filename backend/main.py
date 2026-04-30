@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db, init_db
 from app.models import Location, Plan
-from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead
+from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead, PlanSummary
 from app.third_party.clients.deepseek_client import generate_text
 from app.third_party.clients.weather_client import get_weather_summary
 from app.third_party.errors import ThirdPartyAuthError, ThirdPartyUpstreamError
@@ -48,6 +48,13 @@ def create_plan(payload: PlanCreate, db: Session = Depends(get_db)) -> Plan:
     db.refresh(plan)
     plan.locations = []
     return plan
+
+
+@app.get("/api/plans", response_model=list[PlanSummary])
+@app.get("/api/plans/", response_model=list[PlanSummary], include_in_schema=False)
+def list_plans(db: Session = Depends(get_db)) -> list[Plan]:
+    stmt = select(Plan).order_by(Plan.id.desc())
+    return db.execute(stmt).scalars().all()
 
 
 @app.get("/api/plans/{plan_id}", response_model=PlanRead)
@@ -127,6 +134,17 @@ def delete_location(plan_id: int, location_id: int, db: Session = Depends(get_db
         raise HTTPException(status_code=404, detail="Location not found")
 
     db.delete(location)
+    db.commit()
+    return Response(status_code=204)
+
+
+@app.delete("/api/plans/{plan_id}", status_code=204)
+@app.delete("/api/plans/{plan_id}/", status_code=204, include_in_schema=False)
+def delete_plan(plan_id: int, db: Session = Depends(get_db)) -> Response:
+    plan = db.get(Plan, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    db.delete(plan)
     db.commit()
     return Response(status_code=204)
 

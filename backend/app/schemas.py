@@ -17,6 +17,14 @@ class AISummaryResponse(BaseModel):
     text: str
 
 
+class PlanSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    date: date
+
+
 class PlanCreate(BaseModel):
     title: str
     date: date

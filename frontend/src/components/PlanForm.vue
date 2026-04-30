@@ -56,6 +56,18 @@ const canSubmit = computed(() => {
   return Boolean(form.title.trim()) && Boolean(form.date) && form.budget >= 0 && form.people_count > 0
 })
 
+function applyTemplate(kind: "day" | "weekend") {
+  if (kind === "day") {
+    form.title = "城市一日游"
+    form.budget = 500
+    form.preferences = "轻松节奏；1-2 个核心景点 + 2-3 个美食点；尽量步行/地铁"
+  } else {
+    form.title = "周末轻松游"
+    form.budget = 1200
+    form.preferences = "慢游；景点与咖啡/书店穿插；避免过早出门；留足休息时间"
+  }
+}
+
 async function submit() {
   if (!canSubmit.value || loading.value) return
   loading.value = true
@@ -100,7 +112,13 @@ function reset() {
   <section class="card">
     <header class="card__header">
       <div class="card__kicker">Plan</div>
-      <h2 class="card__title">规划信息</h2>
+      <div class="headRow">
+        <h2 class="card__title">规划信息</h2>
+        <div class="tpl">
+          <button class="chip" type="button" @click="applyTemplate('day')">一日游模板</button>
+          <button class="chip" type="button" @click="applyTemplate('weekend')">周末轻松游模板</button>
+        </div>
+      </div>
       <p class="card__subtitle">先保存规划，再在右侧选点加入地点。</p>
     </header>
 
@@ -187,6 +205,38 @@ function reset() {
   margin: 10px 0 6px;
   font-size: 22px;
   letter-spacing: -0.02em;
+}
+
+.headRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tpl {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 8px 10px;
+  border: 1px solid rgba(12, 16, 32, 0.14);
+  background: rgba(14, 21, 45, 0.05);
+  color: rgba(14, 21, 45, 0.9);
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(12, 16, 32, 0.2);
+  background: rgba(14, 21, 45, 0.08);
 }
 
 .card__subtitle {

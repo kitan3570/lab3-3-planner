@@ -1,4 +1,14 @@
-from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead, TimeSlot, WeatherInfo
+from app.schemas import (
+    AISummaryResponse,
+    LocationCreate,
+    LocationRead,
+    LocationUpdate,
+    PlanCreate,
+    PlanRead,
+    PlanSummary,
+    TimeSlot,
+    WeatherInfo,
+)
 
 __all__ = [
     "PlanCreate",
@@ -9,4 +19,5 @@ __all__ = [
     "TimeSlot",
     "WeatherInfo",
     "AISummaryResponse",
+    "PlanSummary",
 ]
