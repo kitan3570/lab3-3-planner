@@ -25,6 +25,11 @@ class PlanSummary(BaseModel):
     date: date
 
 
+class PublicConfig(BaseModel):
+    amap_js_key: str | None = None
+    amap_security_js_code: str | None = None
+
+
 class PlanCreate(BaseModel):
     title: str
     date: date

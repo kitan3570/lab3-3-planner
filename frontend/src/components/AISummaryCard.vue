@@ -18,9 +18,15 @@ async function generate() {
   errorMessage.value = null
   try {
     const res = await apiFetch<{ text: string }>(`/plans/${props.planId}/ai-summary`, { method: "POST" })
-    text.value = res.text ?? ""
+    const t = (res.text ?? "").trim()
+    if (!t) {
+      text.value = ""
+      errorMessage.value = "模型返回空内容：请检查 Base URL / Model 名称 / Key 权限"
+      return
+    }
+    text.value = t
   } catch (e) {
-    console.error("ai summary failed", e)
+    console.error("详细错误", e)
     errorMessage.value = e instanceof ApiError ? e.message : `生成失败: ${e instanceof Error ? e.message : String(e)}`
   } finally {
     loading.value = false

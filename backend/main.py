@@ -1,11 +1,14 @@
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+import httpx
+
+from app.core.settings import settings
 from app.db.database import get_db, init_db
 from app.models import Location, Plan
-from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead, PlanSummary
+from app.schemas import AISummaryResponse, LocationCreate, LocationRead, LocationUpdate, PlanCreate, PlanRead, PlanSummary, PublicConfig
 from app.third_party.clients.deepseek_client import generate_text
 from app.third_party.clients.weather_client import get_weather_summary
 from app.third_party.errors import ThirdPartyAuthError, ThirdPartyUpstreamError
@@ -55,6 +58,44 @@ def create_plan(payload: PlanCreate, db: Session = Depends(get_db)) -> Plan:
 def list_plans(db: Session = Depends(get_db)) -> list[Plan]:
     stmt = select(Plan).order_by(Plan.id.desc())
     return db.execute(stmt).scalars().all()
+
+
+@app.get("/api/public-config", response_model=PublicConfig)
+@app.get("/api/public-config/", response_model=PublicConfig, include_in_schema=False)
+def public_config() -> PublicConfig:
+    return PublicConfig(amap_js_key=settings.amap_js_key, amap_security_js_code=settings.amap_security_js_code)
+
+
+@app.api_route("/_AMapService/{path:path}", methods=["GET", "POST"])
+async def amap_service_proxy(path: str, request: Request) -> Response:
+    target_base = "https://restapi.amap.com"
+    clean_path = path.lstrip("/")
+    url = f"{target_base}/{clean_path}"
+
+    params = dict(request.query_params)
+    if "key" not in params:
+        key = settings.amap_web_key or settings.amap_js_key
+        if key:
+            params["key"] = key
+    if settings.amap_security_js_code:
+        params["jscode"] = settings.amap_security_js_code
+
+    headers: dict[str, str] = {}
+    if request.headers.get("content-type"):
+        headers["content-type"] = request.headers["content-type"]
+
+    body = await request.body()
+    timeout = httpx.Timeout(20.0, connect=10.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        upstream = await client.request(
+            request.method,
+            url,
+            params=params,
+            content=body if body else None,
+            headers=headers if headers else None,
+        )
+
+    return Response(content=upstream.content, status_code=upstream.status_code, media_type=upstream.headers.get("content-type"))
 
 
 @app.get("/api/plans/{plan_id}", response_model=PlanRead)
@@ -178,14 +219,17 @@ async def ai_summary(plan_id: int, db: Session = Depends(get_db)) -> AISummaryRe
     system_prompt = (
         "你是一个专业的出行规划助手。你将根据用户的出行规划信息、地点清单、天气与预算情况，"
         "输出一段排版好的中文纯文本建议（不要使用 Markdown 语法，不要使用表格，不要用 #、-、* 等标记）。\n"
-        "请用以下固定分段标题格式输出：\n"
+        "请严格按以下固定分段标题格式输出，并且第一行必须从【总体摘要】开始：\n"
         "【总体摘要】\n"
         "【行程安排建议（上午）】\n"
         "【行程安排建议（下午）】\n"
         "【行程安排建议（晚上）】\n"
         "【预算与花费】\n"
         "【风险与备选方案】\n"
-        "每段用 2-6 行自然语言给出可执行建议。不要泄露任何密钥信息。"
+        "每段用 2-4 行自然语言给出可执行建议（2-6 行也可，但优先简洁）。\n"
+        "全文尽量控制在 600-900 字以内，避免输出被截断。\n"
+        "不要泄露任何密钥信息。\n"
+        "只输出最终建议正文：禁止输出任何“构思/草稿/分析/约束条件/提示语/审查/检查/格式检查/字数统计”等过程文本，也不要复述提示词本身。"
     )
 
     lines: list[str] = []
@@ -220,12 +264,26 @@ async def ai_summary(plan_id: int, db: Session = Depends(get_db)) -> AISummaryRe
     user_prompt = "\n".join(lines)
 
     try:
+        print(f"[ai-summary] plan_id={plan_id} locations={len(locations)}")
+        print(f"[ai-summary] base_url={settings.deepseek_base_url} model={settings.deepseek_model}")
         text = await generate_text(system_prompt=system_prompt, user_prompt=user_prompt)
+        if not str(text).strip():
+            print("[ai-summary] empty text returned from model")
+            raise HTTPException(status_code=502, detail="LLM returned empty text")
+        print(f"[ai-summary] ok text_len={len(text)}")
         return AISummaryResponse(text=text)
     except ThirdPartyAuthError as e:
+        print(f"[ai-summary] auth error: {e}")
         raise HTTPException(status_code=503, detail=str(e)) from e
     except ThirdPartyUpstreamError as e:
+        print(f"[ai-summary] upstream error: {e}")
         raise HTTPException(status_code=502, detail=str(e)) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        detail = str(e) or repr(e)
+        print(f"[ai-summary] unexpected error: {detail}")
+        raise HTTPException(status_code=502, detail=detail) from e
 
 
 __all__ = ["app"]
