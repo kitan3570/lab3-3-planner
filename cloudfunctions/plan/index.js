@@ -66,7 +66,12 @@ app.get('/plans', async (req, res) => {
   try {
     await ensureCollection('plans');
     const result = await db.collection('plans').orderBy('created_at', 'desc').get();
-    res.status(200).json(result.data);
+    const plans = result.data.map(plan => {
+      plan.id = plan._id;
+      delete plan._id;
+      return plan;
+    });
+    res.status(200).json(plans);
   } catch (error) {
     console.error('[Plan] Error listing plans:', error);
     res.status(500).json({
@@ -124,7 +129,24 @@ app.get('/plans/:id', async (req, res) => {
       });
     }
 
-    res.status(200).json(result.data[0]);
+    const plan = result.data[0];
+    plan.id = plan._id;
+    delete plan._id;
+
+    const locationsResult = await db.collection('locations')
+      .where({ plan_id: req.params.id })
+      .orderBy('day_index', 'asc')
+      .orderBy('time_slot', 'asc')
+      .get();
+
+    plan.locations = locationsResult.data.map(loc => {
+      loc.id = loc._id;
+      delete loc._id;
+      loc.weather = loc.weather || { ok: false, summary: "天气暂不可接入", error: null };
+      return loc;
+    });
+
+    res.status(200).json(plan);
   } catch (error) {
     console.error('[Plan] Error getting plan:', error);
     res.status(500).json({
@@ -159,7 +181,10 @@ app.put('/plans/:id', async (req, res) => {
     await db.collection('plans').doc(req.params.id).update(updateData);
 
     const result = await db.collection('plans').doc(req.params.id).get();
-    res.status(200).json(result.data[0]);
+    const plan = result.data[0];
+    plan.id = plan._id;
+    delete plan._id;
+    res.status(200).json(plan);
   } catch (error) {
     console.error('[Plan] Error updating plan:', error);
     res.status(500).json({

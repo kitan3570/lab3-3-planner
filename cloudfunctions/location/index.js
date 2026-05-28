@@ -64,10 +64,12 @@ app.post('/plans/:planId/locations', async (req, res) => {
 
     const result = await db.collection('locations').add(locationData);
 
-    res.status(201).json({
-      _id: result.id,
+    const newLocation = {
+      id: result.id,
       ...locationData,
-    });
+    };
+
+    res.status(201).json(newLocation);
   } catch (error) {
     console.error('[Location] Error creating location:', error);
     res.status(500).json({
@@ -86,10 +88,13 @@ app.get('/plans/:planId/locations', async (req, res) => {
       .orderBy('time_slot', 'asc')
       .get();
 
-    const locations = result.data.map(loc => ({
-      ...loc,
-      weather: loc.weather || { ok: false, summary: "天气暂不可接入", error: null }
-    }));
+    const locations = result.data.map(loc => {
+      const location = { ...loc };
+      location.id = location._id;
+      delete location._id;
+      location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
+      return location;
+    });
 
     res.status(200).json(locations);
   } catch (error) {
@@ -112,10 +117,10 @@ app.get('/plans/:planId/locations/:locationId', async (req, res) => {
       });
     }
 
-    const location = {
-      ...result.data[0],
-      weather: result.data[0].weather || { ok: false, summary: "天气暂不可接入", error: null }
-    };
+    const location = { ...result.data[0] };
+    location.id = location._id;
+    delete location._id;
+    location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
 
     res.status(200).json(location);
   } catch (error) {
@@ -162,10 +167,10 @@ app.put('/plans/:planId/locations/:locationId', async (req, res) => {
     await db.collection('locations').doc(locationId).update(updateData);
 
     const result = await db.collection('locations').doc(locationId).get();
-    const location = {
-      ...result.data[0],
-      weather: result.data[0].weather || { ok: false, summary: "天气暂不可接入", error: null }
-    };
+    const location = { ...result.data[0] };
+    location.id = location._id;
+    delete location._id;
+    location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
     res.status(200).json(location);
   } catch (error) {
     console.error('[Location] Error updating location:', error);
