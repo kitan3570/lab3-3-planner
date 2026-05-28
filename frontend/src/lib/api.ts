@@ -1,3 +1,5 @@
+import cloudbase from "@cloudbase/js-sdk";
+
 export type ApiErrorShape = {
   status: number
   message: string
@@ -16,58 +18,84 @@ export class ApiError extends Error {
   }
 }
 
-function getApiOrigin() {
-  const origin = (import.meta.env.VITE_API_ORIGIN as string | undefined) ?? "http://localhost:8000"
-  return origin.replace(/\/$/, "")
-}
+let app: ReturnType<typeof cloudbase.init> | null = null
 
-function getApiBasePath() {
-  const base = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api"
-  return base.startsWith("/") ? base : `/${base}`
-}
-
-export function apiUrl(path: string) {
-  const p = path.startsWith("/") ? path : `/${path}`
-  return `${getApiOrigin()}${getApiBasePath()}${p}`
+function getApp() {
+  if (!app) {
+    app = cloudbase.init({
+      env: "lab3-d3gc0uqhg90f39d16"
+    })
+  }
+  return app
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response
+  const app = getApp()
+  const method = init?.method?.toUpperCase() || "GET"
+  
   try {
-    res = await fetch(apiUrl(path), {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init?.headers ?? {})
-      }
+    const result = await app.callFunction({
+      name: getFunctionName(path),
+      data: buildEvent(path, method, init?.body as string)
     })
+
+    const response = result.result
+
+    if (response.statusCode >= 400) {
+      const details = typeof response.body === "string" 
+        ? JSON.parse(response.body) 
+        : response.body
+      
+      throw new ApiError({
+        status: response.statusCode,
+        message: details?.error || details?.message || `请求失败 (${response.statusCode})`,
+        details
+      })
+    }
+
+    const body = typeof response.body === "string" 
+      ? JSON.parse(response.body) 
+      : response.body
+    
+    return body as T
+
   } catch (e) {
+    if (e instanceof ApiError) {
+      throw e
+    }
+    
     const message = e instanceof Error ? e.message : String(e)
     throw new ApiError({ status: 0, message: `网络请求失败: ${message}`, details: e })
   }
+}
 
-  if (!res.ok) {
-    let details: unknown = undefined
-    try {
-      details = await res.json()
-    } catch {
-      details = await res.text().catch(() => undefined)
-    }
-    const message = (() => {
-      if (typeof details === "object" && details && "detail" in details) {
-        const d = (details as any).detail
-        if (typeof d === "string") return d
-        try {
-          return `请求失败 (${res.status}): ${JSON.stringify(d)}`
-        } catch {
-          return `请求失败 (${res.status})`
-        }
-      }
-      return `请求失败 (${res.status})`
-    })()
-    throw new ApiError({ status: res.status, message, details })
+function getFunctionName(path: string): string {
+  if (path.startsWith("/plans/") && path.includes("/locations")) {
+    return "location"
   }
+  if (path.startsWith("/plans/") && path.includes("/ai-summary")) {
+    return "ai-summary"
+  }
+  if (path.startsWith("/plans")) {
+    return "plan"
+  }
+  if (path.startsWith("/locations")) {
+    return "location"
+  }
+  if (path.startsWith("/ai-summary")) {
+    return "ai-summary"
+  }
+  return "plan"
+}
 
-  if (res.status === 204) return undefined as T
-  return (await res.json()) as T
+function buildEvent(path: string, method: string, body?: string) {
+  return {
+    httpMethod: method,
+    path: path,
+    body: body || ""
+  }
+}
+
+export function apiUrl(path: string): string {
+  return path
 }

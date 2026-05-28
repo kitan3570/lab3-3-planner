@@ -7,6 +7,32 @@ const app = cloudbase.init({
 
 const db = app.database();
 
+let collectionCreated = false;
+
+async function ensureCollection(collectionName) {
+  if (collectionCreated) return;
+  
+  try {
+    await db.createCollection(collectionName);
+    console.log(`[Plan] Created collection: ${collectionName}`);
+  } catch (error) {
+    if (error.code !== 'DATABASE_COLLECTION_EXISTS') {
+      console.warn(`[Plan] Failed to create collection ${collectionName}:`, error.message);
+    }
+  }
+  
+  try {
+    await db.createCollection('locations');
+    console.log('[Plan] Created collection: locations');
+  } catch (error) {
+    if (error.code !== 'DATABASE_COLLECTION_EXISTS') {
+      console.warn('[Plan] Failed to create collection locations:', error.message);
+    }
+  }
+  
+  collectionCreated = true;
+}
+
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -142,6 +168,8 @@ exports.main = async (event, context) => {
   }
 
   try {
+    await ensureCollection('plans');
+    
     const result = await routeRequest(event);
 
     return {

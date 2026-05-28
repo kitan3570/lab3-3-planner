@@ -143,6 +143,7 @@ async function createLocation(planId, data) {
     estimated_cost: data.estimated_cost,
     duration: data.duration,
     remarks: data.remarks || null,
+    weather: data.weather || null,
     created_at: new Date(),
     updated_at: new Date()
   };
@@ -154,7 +155,10 @@ async function createLocation(planId, data) {
     ...locationData
   };
 
-  const weather = await weatherClient.getWeatherSummary(data.lat, data.lng);
+  let weather = data.weather;
+  if (!weather || !weather.ok || !weather.summary) {
+    weather = await weatherClient.getWeatherSummary(data.lat, data.lng);
+  }
   newLocation.weather = weather;
 
   console.log(`[CreateLocation] Success: ${res.id}`);
@@ -283,7 +287,12 @@ async function listLocationsByPlan(planId) {
 
   const locations = await Promise.all(
     res.data.map(async (location) => {
-      const weather = await weatherClient.getWeatherSummary(location.lat, location.lng);
+      let weather = location.weather;
+      
+      if (!weather || !weather.ok || !weather.summary) {
+        weather = await weatherClient.getWeatherSummary(location.lat, location.lng);
+      }
+      
       return { ...location, weather };
     })
   );
