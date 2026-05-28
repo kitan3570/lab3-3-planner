@@ -30,7 +30,7 @@ const db = app.database();
  */
 function corsHeaders() {
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://lab3-d3gc0uqhg90f39d16-1433230905.tcloudbaseapp.com',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
   };

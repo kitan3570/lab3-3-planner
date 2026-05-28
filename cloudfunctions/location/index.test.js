@@ -113,7 +113,7 @@ describe('Location Cloud Function', () => {
       const { corsHeaders } = require('./index');
       const headers = corsHeaders();
 
-      expect(headers['Access-Control-Allow-Origin']).toBe('*');
+      expect(headers['Access-Control-Allow-Origin']).toBe('https://lab3-d3gc0uqhg90f39d16-1433230905.tcloudbaseapp.com');
       expect(headers['Access-Control-Allow-Headers']).toBe('Content-Type');
       expect(headers['Access-Control-Allow-Methods']).toBe('GET, POST, PUT, DELETE, OPTIONS');
     });
