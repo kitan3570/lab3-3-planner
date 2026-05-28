@@ -1,378 +1,293 @@
-/**
- * CloudBase AI Summary 云函数
- * 
- * 实现 AI 辅助总结功能：
- * - 根据规划 ID 查询完整规划信息和关联地点
- * - 调用 DeepSeek 大模型生成出行总结建议
- * - 返回结构化的总结响应数据
- * 
- * API 接口：POST /plans/:plan_id/ai-summary
- * 
- * 环境变量配置：
- * - DEEPSEEK_API_KEY: DeepSeek API 密钥
- */
-
+const express = require('express');
 const cloudbase = require("@cloudbase/node-sdk");
 const axios = require("axios");
 
-const app = cloudbase.init({
+const app = express();
+const port = process.env.PORT || 9000;
+
+const cb = cloudbase.init({
   env: cloudbase.SYMBOL_CURRENT_ENV,
 });
 
-const db = app.database();
+const db = cb.database();
 
-/**
- * CORS 配置
- * 所有响应添加标准 CORS 头
- */
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': 'https://lab3-d3gc0uqhg90f39d16-1433230905.tcloudbaseapp.com',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Max-Age': '86400'
-  };
-}
+app.use(express.json());
 
-/**
- * 解析请求体
- * @param {object} event - 云函数事件对象
- * @returns {object} 解析后的请求体
- */
-function parseBody(event) {
-  if (!event.body) {
-    return {};
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.status(204).send();
+    return;
   }
-  if (typeof event.body === 'string') {
-    try {
-      return JSON.parse(event.body);
-    } catch (e) {
-      console.error('[Parse] Failed to parse request body:', e.message);
-      return {};
-    }
-  }
-  return event.body;
-}
+  next();
+});
 
-/**
- * 获取天气摘要文本
- * @param {object} weather - 天气对象
- * @returns {string} 天气摘要文本
- */
-function getWeatherText(weather) {
-  if (!weather) {
-    return '天气不可用';
-  }
-  return weather.ok && weather.summary ? weather.summary : '天气不可用';
-}
+app.get('/', async (req, res) => {
+  res.status(200).json({
+    service: 'ai-summary',
+    status: 'ok',
+    message: 'AI Summary API is running'
+  });
+});
 
-/**
- * 生成系统提示词
- * @returns {string} 系统提示词
- */
-function getSystemPrompt() {
-  return (
-    "你是一个专业的出行规划助手。你将根据用户的出行规划信息、地点清单、天气与预算情况，" +
-    "输出一段排版好的中文纯文本建议（不要使用 Markdown 语法，不要使用表格，不要用 #、-、* 等标记）。\n" +
-    "请严格按以下固定分段标题格式输出，并且第一行必须从【总体摘要】开始：\n" +
-    "【总体摘要】\n" +
-    "【行程安排建议（上午）】\n" +
-    "【行程安排建议（下午）】\n" +
-    "【行程安排建议（晚上）】\n" +
-    "【预算与花费】\n" +
-    "【风险与备选方案】\n" +
-    "每段用 2-4 行自然语言给出可执行建议（2-6 行也可，但优先简洁）。\n" +
-    "全文尽量控制在 600-900 字以内，避免输出被截断。\n" +
-    "不要泄露任何密钥信息。\n" +
-    "只输出最终建议正文：禁止输出任何“构思/草稿/分析/约束条件/提示语/审查/检查/格式检查/字数统计”等过程文本，也不要复述提示词本身。"
-  );
-}
+async function fetchPlanWithLocations(planId) {
+  const planResult = await db.collection('plans').doc(planId).get();
 
-/**
- * 生成用户提示词
- * @param {object} plan - 规划对象
- * @param {array} locations - 地点列表
- * @returns {string} 用户提示词
- */
-function generateUserPrompt(plan, locations) {
-  const lines = [];
-  
-  lines.push(`出行规划：${plan.title}`);
-  lines.push("");
-  lines.push(`日期：${plan.date}`);
-  lines.push(`人数：${plan.people_count}`);
-  lines.push(`预算：¥${plan.budget}`);
-  if (plan.preferences) {
-    lines.push(`偏好：${plan.preferences}`);
+  if (!planResult.data || planResult.data.length === 0) {
+    throw { statusCode: 404, message: 'Plan not found' };
   }
-  if (plan.remarks) {
-    lines.push(`备注：${plan.remarks}`);
-  }
-  lines.push("");
-  lines.push("地点清单：");
-  lines.push("");
-  
-  for (const loc of locations) {
-    const weatherText = getWeatherText(loc.weather);
-    const remarks = loc.remarks || "";
-    const extra = remarks ? `；备注：${remarks}` : "";
-    lines.push(
-      `${loc.time_slot}｜${loc.name}｜${weatherText}｜¥${Math.round(loc.estimated_cost)}｜${loc.duration}分钟${extra}`
-    );
-  }
-  
-  const totalLocationsCost = locations.reduce((sum, loc) => sum + (loc.estimated_cost || 0), 0);
-  const totalDuration = locations.reduce((sum, loc) => sum + (loc.duration || 0), 0);
-  
-  const slotCost = { "上午": 0, "下午": 0, "晚上": 0 };
-  for (const loc of locations) {
-    const slot = loc.time_slot;
-    if (slotCost.hasOwnProperty(slot)) {
-      slotCost[slot] += (loc.estimated_cost || 0);
-    }
-  }
-  
-  const budgetLeft = plan.budget - totalLocationsCost;
-  
-  lines.push("");
-  lines.push("花费汇总：");
-  lines.push("");
-  lines.push(`地点预计花费合计：¥${Math.round(totalLocationsCost)}`);
-  lines.push(`总停留时长：${totalDuration} 分钟`);
-  lines.push(`上午/下午/晚上花费：¥${Math.round(slotCost["上午"])} / ¥${Math.round(slotCost["下午"])} / ¥${Math.round(slotCost["晚上"])}`);
-  lines.push(`预算差额：¥${Math.round(budgetLeft)}（正数=剩余，负数=超支）`);
-  
-  return lines.join("\n");
-}
 
-/**
- * 调用 DeepSeek API 生成文本
- * @param {string} systemPrompt - 系统提示词
- * @param {string} userPrompt - 用户提示词
- * @returns {Promise<string>} 生成的文本
- */
-async function generateText(systemPrompt, userPrompt) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('DeepSeek API key not configured');
-  }
-  
-  const url = 'https://api.deepseek.com/v1/chat/completions';
-  
-  const requestBody = {
-    model: 'deepseek-chat',
-    messages: [
-      {
-        role: 'system',
-        content: systemPrompt
-      },
-      {
-        role: 'user',
-        content: userPrompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 1500
-  };
-  
-  try {
-    const response = await axios.post(url, requestBody, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 60000
-    });
-    
-    const result = response.data;
-    
-    if (!result || !result.choices || result.choices.length === 0) {
-      throw new Error('DeepSeek API returned empty response');
-    }
-    
-    const text = result.choices[0].message.content.trim();
-    
-    if (!text) {
-      throw new Error('DeepSeek API returned empty text');
-    }
-    
-    return text;
-    
-  } catch (error) {
-    console.error('[DeepSeek] API request failed:', error.message);
-    
-    if (error.response) {
-      const status = error.response.status;
-      const data = error.response.data;
-      
-      if (status === 401) {
-        throw new Error('DeepSeek API authentication failed: invalid key');
-      } else if (status === 429) {
-        throw new Error('DeepSeek API rate limited: too many requests');
-      } else if (status >= 500) {
-        throw new Error('DeepSeek API server error');
-      } else {
-        const errorMsg = data.error ? data.error.message || JSON.stringify(data.error) : `HTTP error ${status}`;
-        throw new Error(`DeepSeek API error: ${errorMsg}`);
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      throw new Error('DeepSeek API request timeout');
-    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new Error('DeepSeek API network error');
-    } else {
-      throw new Error(`DeepSeek API request failed: ${error.message}`);
-    }
-  }
-}
+  const plan = planResult.data[0];
 
-/**
- * 查询规划和关联地点
- * @param {string} planId - 规划 ID
- * @returns {Promise<object>} 包含规划和地点的对象
- */
-async function getPlanWithLocations(planId) {
-  console.log(`[GetPlan] Querying plan: ${planId}`);
-  
-  const planRes = await db.collection('plans').doc(planId).get();
-  
-  if (!planRes.data || planRes.data.length === 0) {
-    throw new Error('Plan not found');
-  }
-  
-  const plan = planRes.data[0];
-  
-  const locationsRes = await db.collection('locations')
+  const locationsResult = await db.collection('locations')
     .where({ plan_id: planId })
     .orderBy('day_index', 'asc')
     .orderBy('time_slot', 'asc')
     .get();
-  
-  const locations = locationsRes.data;
-  
-  console.log(`[GetPlan] Found ${locations.length} locations for plan ${planId}`);
-  
-  return { plan, locations };
+
+  plan.locations = locationsResult.data;
+
+  return plan;
 }
 
-/**
- * 处理 AI 总结请求
- * @param {string} planId - 规划 ID
- * @returns {Promise<object>} 总结结果
- */
-async function handleAiSummary(planId) {
-  console.log(`[AI Summary] Processing plan: ${planId}`);
-  
-  const { plan, locations } = await getPlanWithLocations(planId);
-  
-  const systemPrompt = getSystemPrompt();
-  const userPrompt = generateUserPrompt(plan, locations);
-  
-  console.log(`[AI Summary] Calling DeepSeek API, locations: ${locations.length}`);
-  
-  const text = await generateText(systemPrompt, userPrompt);
-  
-  console.log(`[AI Summary] Success, text length: ${text.length}`);
-  
-  return {
-    text: text
-  };
-}
-
-/**
- * 路由分发函数
- * @param {object} event - 云函数事件对象
- * @returns {Promise<object>} 处理结果
- */
-async function routeRequest(event) {
-  const method = event.httpMethod;
-  const path = event.path;
-  
-  console.log(`[Route] ${method} ${path}`);
-  
-  const pathPattern = /^\/plans\/([^\/]+)\/ai-summary$/;
-  const match = path.match(pathPattern);
-  
-  if (!match) {
-    throw new Error('Route not found');
-  }
-  
-  const planId = match[1];
-  
-  if (!planId) {
-    throw new Error('Plan ID is required');
-  }
-  
-  if (method === 'POST') {
-    return await handleAiSummary(planId);
-  } else {
-    throw new Error(`Method ${method} not allowed for this route`);
-  }
-}
-
-/**
- * 云函数入口
- * 处理所有 HTTP 请求，统一返回 JSON 格式响应
- */
-exports.main = async (event, context) => {
-  console.log('[AI Summary Function] Request received');
-  console.log('[AI Summary Function] Event:', JSON.stringify({
-    httpMethod: event.httpMethod,
-    path: event.path,
-    queryStringParameters: event.queryStringParameters
-  }));
-  
-  if (event.httpMethod === 'OPTIONS') {
-    console.log('[AI Summary Function] Handling OPTIONS request');
-    return {
-      statusCode: 204,
-      headers: corsHeaders(),
-      body: ''
-    };
-  }
-  
-  try {
-    const result = await routeRequest(event);
-    
-    console.log('[AI Summary Function] Response: 200 OK');
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders()
-      },
-      body: JSON.stringify(result)
-    };
-    
-  } catch (error) {
-    console.error('[AI Summary Function] Error:', error.message);
-    console.error('[AI Summary Function] Stack:', error.stack);
-    
-    let statusCode = 500;
-    let message = error.message;
-    
-    if (error.message === 'Plan not found') {
-      statusCode = 404;
-    } else if (error.message.includes('API key not configured') || error.message.includes('authentication failed')) {
-      statusCode = 503;
-    } else if (error.message.includes('rate limited')) {
-      statusCode = 429;
-    } else if (error.message.includes('not allowed')) {
-      statusCode = 405;
-    } else if (error.message.includes('Route not found')) {
-      statusCode = 404;
+function buildPrompt(plan) {
+  const locationsByDay = {};
+  plan.locations.forEach(location => {
+    const day = location.day_index;
+    if (!locationsByDay[day]) {
+      locationsByDay[day] = [];
     }
-    
-    return {
-      statusCode: statusCode,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders()
-      },
-      body: JSON.stringify({
-        error: message,
-        code: statusCode
-      })
-    };
+    locationsByDay[day].push(location);
+  });
+
+  let locationsDesc = '';
+  Object.keys(locationsByDay).sort((a, b) => parseInt(a) - parseInt(b)).forEach(day => {
+    locationsDesc += `\n第${day}天：\n`;
+    locationsByDay[day].forEach(loc => {
+      const weather = loc.weather?.ok ? loc.weather.summary : '天气未知';
+      locationsDesc += `  - ${loc.time_slot}：${loc.name}（${weather}，预计花费¥${loc.estimated_cost}，时长${loc.duration}分钟）`;
+      if (loc.remarks) {
+        locationsDesc += ` - ${loc.remarks}`;
+      }
+      locationsDesc += '\n';
+    });
+  });
+
+  const prompt = `
+你是一个智能出行规划助手。请根据以下旅行规划信息，生成一份详细的出行总结报告。
+
+【规划信息】
+标题：${plan.title}
+日期：${plan.date}
+预算：¥${plan.budget}
+人数：${plan.people_count}人
+偏好：${plan.preferences || '无'}
+备注：${plan.remarks || '无'}
+
+【行程安排】${locationsDesc || '\n暂无具体行程安排'}
+
+【输出要求】
+1. 总体摘要：简要概括整个行程的特点和亮点
+2. 行程安排建议：分时段（上午、下午、晚上）给出详细的行程建议
+3. 预算与花费：分析预算分配，给出合理的消费建议
+4. 风险与备选方案：分析可能遇到的问题和应对措施
+
+请用中文输出，语言要自然、友好，适合用户阅读。
+`;
+
+  return prompt.trim();
+}
+
+async function callDeepSeek(prompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[AI] DEEPSEEK_API_KEY not set, returning mock summary');
+    return `
+【总体摘要】
+您的旅行计划看起来很棒！由于未配置 AI 服务，暂时无法生成详细的智能总结。
+
+【行程安排建议】
+请手动规划您的行程，合理安排时间和交通。
+
+【预算建议】
+建议提前做好预算规划，合理分配各项开支。
+
+【温馨提示】
+如需使用 AI 智能总结功能，请在 CloudBase 控制台配置 DEEPSEEK_API_KEY 环境变量。
+    `.trim();
   }
+
+  try {
+    const response = await axios.post(
+      'https://api.deepseek.com/v1/chat/completions',
+      {
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一个专业的旅行规划助手，擅长为用户提供详细的出行建议和总结。'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        timeout: 60000
+      }
+    );
+
+    if (response.data && response.data.choices && response.data.choices.length > 0) {
+      return response.data.choices[0].message.content;
+    } else {
+      throw new Error('Invalid API response');
+    }
+  } catch (error) {
+    console.error('[AI] Error calling DeepSeek API:', error.message);
+    throw { statusCode: 500, message: 'Failed to generate summary', details: error.message };
+  }
+}
+
+app.post('/plans/:planId/ai-summary', async (req, res) => {
+  const planId = req.params.planId;
+
+  console.log(`[AI] Received request for plan: ${planId}`);
+
+  try {
+    const plan = await fetchPlanWithLocations(planId);
+    console.log(`[AI] Plan loaded successfully, ${plan.locations.length} locations`);
+
+    const prompt = buildPrompt(plan);
+    console.log(`[AI] Prompt built, length: ${prompt.length}`);
+
+    const summary = await callDeepSeek(prompt);
+    console.log(`[AI] Summary generated, length: ${summary.length}`);
+
+    res.status(200).json({
+      success: true,
+      plan_id: planId,
+      summary: summary,
+      word_count: summary.length,
+      generated_at: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[AI] Error:', error);
+
+    if (error.statusCode) {
+      res.status(error.statusCode).json({
+        success: false,
+        error: error.message,
+        details: error.details
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Internal server error',
+        details: error
+      });
+    }
+  }
+});
+
+app.all('*', (req, res) => {
+  res.status(404).json({
+    error: 'Not found'
+  });
+});
+
+exports.main = async (event, context) => {
+  return new Promise((resolve, reject) => {
+    const method = (event.httpMethod || 'GET').toUpperCase();
+    let path = event.path || '/';
+
+    const headers = event.headers || {};
+    const body = event.body;
+    const query = event.queryStringParameters || {};
+
+    const mockReq = {
+      method: method,
+      url: path,
+      path: path,
+      params: {},
+      query: query,
+      headers: headers,
+      body: body,
+      get method() { return this.method; },
+      get url() { return this.url; }
+    };
+
+    const mockRes = {
+      statusCode: 200,
+      headers: {},
+      body: '',
+      status: function(code) {
+        this.statusCode = code;
+        return this;
+      },
+      setHeader: function(name, value) {
+        this.headers[name] = value;
+        return this;
+      },
+      getHeader: function(name) {
+        return this.headers[name];
+      },
+      json: function(data) {
+        this.body = JSON.stringify(data);
+        this.headers['Content-Type'] = 'application/json';
+        resolve({
+          statusCode: this.statusCode,
+          headers: this.headers,
+          body: this.body
+        });
+      },
+      send: function(data) {
+        if (data !== undefined) {
+          this.body = typeof data === 'object' ? JSON.stringify(data) : String(data);
+        }
+        resolve({
+          statusCode: this.statusCode,
+          headers: this.headers,
+          body: this.body
+        });
+      },
+      end: function(data) {
+        if (data !== undefined) {
+          this.body = String(data);
+        }
+        resolve({
+          statusCode: this.statusCode,
+          headers: this.headers,
+          body: this.body
+        });
+      }
+    };
+
+    try {
+      app(mockReq, mockRes, function(err) {
+        if (err) {
+          console.error('[AI] Middleware error:', err);
+          reject(err);
+        }
+      });
+    } catch (err) {
+      console.error('[AI] Error handling request:', err);
+      reject(err);
+    }
+  });
 };
+
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`[AI-Summary] Server running on port ${port}`);
+  });
+}
+
+module.exports = app;

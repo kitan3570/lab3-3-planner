@@ -8,54 +8,21 @@
       "runtime": "Nodejs20.19",
       "handler": "index.main",
       "timeout": 15,
-      "memorySize": 256,
-      "triggers": [
-        {
-          "name": "plan-trigger",
-          "type": "apigw",
-          "config": {
-            "isBase64Encoded": false,
-            "path": "/api/plans",
-            "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-          }
-        }
-      ]
+      "memorySize": 256
     },
     {
       "name": "location",
       "runtime": "Nodejs20.19",
       "handler": "index.main",
       "timeout": 15,
-      "memorySize": 256,
-      "triggers": [
-        {
-          "name": "location-trigger",
-          "type": "apigw",
-          "config": {
-            "isBase64Encoded": false,
-            "path": "/api/locations",
-            "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-          }
-        }
-      ]
+      "memorySize": 256
     },
     {
       "name": "ai-summary",
       "runtime": "Nodejs20.19",
       "handler": "index.main",
       "timeout": 60,
-      "memorySize": 512,
-      "triggers": [
-        {
-          "name": "ai-summary-trigger",
-          "type": "apigw",
-          "config": {
-            "isBase64Encoded": false,
-            "path": "/api/ai-summary",
-            "method": ["POST", "OPTIONS"]
-          }
-        }
-      ]
+      "memorySize": 512
     }
   ]
 }

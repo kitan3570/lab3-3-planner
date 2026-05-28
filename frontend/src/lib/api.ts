@@ -1,5 +1,3 @@
-import cloudbase from "@cloudbase/js-sdk";
-
 export type ApiErrorShape = {
   status: number
   message: string
@@ -18,81 +16,70 @@ export class ApiError extends Error {
   }
 }
 
-let app: ReturnType<typeof cloudbase.init> | null = null
+// 云函数 HTTP 调用地址
+const CLOUDBASE_URL = "https://lab3-d3gc0uqhg90f39d16.service.tcloudbase.com"
 
-function getApp() {
-  if (!app) {
-    app = cloudbase.init({
-      env: "lab3-d3gc0uqhg90f39d16"
-    })
+function getFunctionUrl(path: string): string {
+  if (path.includes("/locations")) {
+    return `${CLOUDBASE_URL}/location`
   }
-  return app
+  if (path.includes("/ai-summary")) {
+    return `${CLOUDBASE_URL}/ai-summary`
+  }
+  return `${CLOUDBASE_URL}/plan`
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const app = getApp()
   const method = init?.method?.toUpperCase() || "GET"
-  
+  const url = getFunctionUrl(path)
+
+  let fullPath = url + path
+  console.log(`[API] Calling: ${method} ${fullPath}`)
+
   try {
-    const result = await app.callFunction({
-      name: getFunctionName(path),
-      data: buildEvent(path, method, init?.body as string)
+    const response = await fetch(fullPath, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: init?.body,
+      mode: "cors",
+      cache: "no-cache"
     })
 
-    const response = result.result
+    console.log(`[API] Response status:`, response.status)
 
-    if (response.statusCode >= 400) {
-      const details = typeof response.body === "string" 
-        ? JSON.parse(response.body) 
-        : response.body
-      
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`[API] HTTP error: ${response.status}`, errorText)
+
       throw new ApiError({
-        status: response.statusCode,
-        message: details?.error || details?.message || `请求失败 (${response.statusCode})`,
-        details
+        status: response.status,
+        message: `HTTP 请求失败: ${response.status} ${response.statusText}`,
+        details: errorText
       })
     }
 
-    const body = typeof response.body === "string" 
-      ? JSON.parse(response.body) 
-      : response.body
-    
-    return body as T
+    const result = await response.json()
+    console.log(`[API] Response:`, result)
+
+    return result as T
 
   } catch (e) {
+    console.error(`[API] Error:`, e)
+
     if (e instanceof ApiError) {
       throw e
     }
-    
+
     const message = e instanceof Error ? e.message : String(e)
-    throw new ApiError({ status: 0, message: `网络请求失败: ${message}`, details: e })
-  }
-}
 
-function getFunctionName(path: string): string {
-  if (path.startsWith("/plans/") && path.includes("/locations")) {
-    return "location"
-  }
-  if (path.startsWith("/plans/") && path.includes("/ai-summary")) {
-    return "ai-summary"
-  }
-  if (path.startsWith("/plans")) {
-    return "plan"
-  }
-  if (path.startsWith("/locations")) {
-    return "location"
-  }
-  if (path.startsWith("/ai-summary")) {
-    return "ai-summary"
-  }
-  return "plan"
-}
-
-function buildEvent(path: string, method: string, body?: string) {
-  return {
-    httpMethod: method,
-    path: path,
-    body: body || ""
+    throw new ApiError({
+      status: 0,
+      message: `网络请求失败: ${message}`,
+      details: e
+    })
   }
 }
 

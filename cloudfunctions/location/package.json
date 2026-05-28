@@ -6,7 +6,9 @@
   "keywords": ["cloudbase", "cloud-function", "node-sdk", "weather"],
   "dependencies": {
     "@cloudbase/node-sdk": "^3.0.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "jest": "^29.7.0"
