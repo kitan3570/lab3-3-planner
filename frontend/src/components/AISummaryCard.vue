@@ -21,7 +21,7 @@ async function generate() {
     const t = (res.text ?? "").trim()
     if (!t) {
       text.value = ""
-      errorMessage.value = "模型返回空内容：请检查 Base URL / Model 名称 / Key 权限"
+      errorMessage.value = "AI 生成失败，请检查 CloudBase 控制台中 ai-summary 云函数的 DEEPSEEK_API_KEY 环境变量配置"
       return
     }
     text.value = t

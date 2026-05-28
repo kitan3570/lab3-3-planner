@@ -57,7 +57,7 @@ app.post('/plans/:planId/locations', async (req, res) => {
       estimated_cost: data.estimated_cost ? parseFloat(data.estimated_cost) : 0,
       duration: data.duration ? parseInt(data.duration) : 60,
       remarks: data.remarks || null,
-      weather: data.weather || null,
+      weather: data.weather || { ok: false, summary: "天气暂不可接入", error: null },
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -86,7 +86,12 @@ app.get('/plans/:planId/locations', async (req, res) => {
       .orderBy('time_slot', 'asc')
       .get();
 
-    res.status(200).json(result.data);
+    const locations = result.data.map(loc => ({
+      ...loc,
+      weather: loc.weather || { ok: false, summary: "天气暂不可接入", error: null }
+    }));
+
+    res.status(200).json(locations);
   } catch (error) {
     console.error('[Location] Error listing locations:', error);
     res.status(500).json({
@@ -107,7 +112,12 @@ app.get('/plans/:planId/locations/:locationId', async (req, res) => {
       });
     }
 
-    res.status(200).json(result.data[0]);
+    const location = {
+      ...result.data[0],
+      weather: result.data[0].weather || { ok: false, summary: "天气暂不可接入", error: null }
+    };
+
+    res.status(200).json(location);
   } catch (error) {
     console.error('[Location] Error getting location:', error);
     res.status(500).json({
@@ -152,7 +162,11 @@ app.put('/plans/:planId/locations/:locationId', async (req, res) => {
     await db.collection('locations').doc(locationId).update(updateData);
 
     const result = await db.collection('locations').doc(locationId).get();
-    res.status(200).json(result.data[0]);
+    const location = {
+      ...result.data[0],
+      weather: result.data[0].weather || { ok: false, summary: "天气暂不可接入", error: null }
+    };
+    res.status(200).json(location);
   } catch (error) {
     console.error('[Location] Error updating location:', error);
     res.status(500).json({

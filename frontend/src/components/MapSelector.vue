@@ -75,12 +75,9 @@ async function ensureAmap() {
   try {
     const cfg = await apiFetch<{ amap_js_key?: string | null; amap_security_js_code?: string | null }>("/public-config")
     const key = (cfg.amap_js_key ?? "").trim()
-    if (!key) throw new Error("未配置 AMAP_JS_KEY（请在 backend/.env 中填写）")
+    if (!key) throw new Error("未配置高德地图 Key，请在 CloudBase 控制台为 plan 云函数配置 AMAP_JS_KEY 环境变量")
     const jscode = (cfg.amap_security_js_code ?? "").trim()
-    const apiOrigin = ((import.meta.env.VITE_API_ORIGIN as string | undefined) ?? "http://localhost:8000").replace(
-      /\/$/,
-      ""
-    )
+    const apiOrigin = "https://lab3-d3gc0uqhg90f39d16.service.tcloudbase.com/plan"
     const serviceHost = `${apiOrigin}/_AMapService`
     AMap = await loadAmapJs(key, { securityJsCode: jscode || null, serviceHost })
     if (!mapEl.value) throw new Error("Map container missing")

@@ -171,11 +171,7 @@ app.post('/plans/:planId/ai-summary', async (req, res) => {
     console.log(`[AI] Summary generated, length: ${summary.length}`);
 
     res.status(200).json({
-      success: true,
-      plan_id: planId,
-      summary: summary,
-      word_count: summary.length,
-      generated_at: new Date().toISOString()
+      text: summary
     });
 
   } catch (error) {

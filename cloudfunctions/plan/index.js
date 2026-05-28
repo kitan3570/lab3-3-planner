@@ -1,6 +1,8 @@
 const express = require('express');
 const cloudbase = require("@cloudbase/node-sdk");
 const { v4: uuidv4 } = require("uuid");
+const https = require('https');
+const url = require('url');
 
 const app = express();
 const port = process.env.PORT || 9000;
@@ -54,6 +56,10 @@ app.get('/', async (req, res) => {
     status: 'ok',
     message: 'Plan API is running'
   });
+});
+
+app.get('/health', async (req, res) => {
+  res.status(200).json({ ok: true });
 });
 
 app.get('/plans', async (req, res) => {
@@ -183,6 +189,94 @@ app.delete('/plans/:id', async (req, res) => {
     console.error('[Plan] Error deleting plan:', error);
     res.status(500).json({
       error: error.message || 'Internal server error'
+    });
+  }
+});
+
+app.get('/public-config', async (req, res) => {
+  try {
+    res.status(200).json({
+      amap_js_key: process.env.AMAP_JS_KEY || '',
+      amap_security_js_code: process.env.AMAP_SECURITY_JSCODE || ''
+    });
+  } catch (error) {
+    console.error('[Plan] Error getting public config:', error);
+    res.status(500).json({
+      error: error.message || 'Internal server error'
+    });
+  }
+});
+
+app.all('/_AMapService/*', async (req, res) => {
+  try {
+    const targetPath = req.path.replace(/^\/_AMapService\//i, '');
+    
+    if (!targetPath) {
+      return res.status(400).json({
+        error: 'Missing target path'
+      });
+    }
+
+    const queryParams = new URLSearchParams();
+    
+    for (const key in req.query) {
+      queryParams.append(key, req.query[key]);
+    }
+    
+    queryParams.set('key', process.env.AMAP_WEB_KEY || '');
+    queryParams.set('jscode', process.env.AMAP_SECURITY_JSCODE || '');
+
+    const amapUrl = `https://restapi.amap.com/${targetPath}?${queryParams.toString()}`;
+    
+    console.log('[Plan] Proxying to:', amapUrl);
+
+    const options = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    const response = await new Promise((resolve, reject) => {
+      const reqUrl = new URL(amapUrl);
+      const reqOptions = {
+        hostname: reqUrl.hostname,
+        port: 443,
+        path: `${reqUrl.pathname}${reqUrl.search}`,
+        method: req.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      };
+
+      const amapReq = https.request(reqOptions, (amapRes) => {
+        let data = '';
+        amapRes.on('data', (chunk) => {
+          data += chunk;
+        });
+        amapRes.on('end', () => {
+          resolve({
+            statusCode: amapRes.statusCode,
+            headers: amapRes.headers,
+            body: data
+          });
+        });
+      });
+
+      amapReq.on('error', (e) => {
+        reject(e);
+      });
+
+      amapReq.end();
+    });
+
+    res.status(response.statusCode).json(JSON.parse(response.body));
+    
+  } catch (error) {
+    console.error('[Plan] Error proxying AMap request:', error);
+    res.status(500).json({
+      error: error.message || 'Proxy error'
     });
   }
 });
