@@ -1,0 +1,14 @@
+{
+  "name": "plan-cloud-function",
+  "version": "1.0.0",
+  "description": "CloudBase Node.js Cloud Function for Plan management",
+  "main": "index.js",
+  "keywords": ["cloudbase", "cloud-function", "node-sdk"],
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.0.0",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

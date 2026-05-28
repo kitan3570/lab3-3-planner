@@ -1,0 +1,22 @@
+0 verbose cli /Users/li/.nvm/versions/node/v24.15.0/bin/node /Users/li/.nvm/versions/node/v24.15.0/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.12.1
+2 info using node@v24.15.0
+3 silly config load:file:/Users/li/.nvm/versions/node/v24.15.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/li/Desktop/lab3-2/.npmrc
+5 silly config load:file:/Users/li/Desktop/lab3-2/.cloudbase-home/.npmrc
+6 silly config load:file:/Users/li/.nvm/versions/node/v24.15.0/etc/npmrc
+7 verbose title npm exec @cloudbase/cloudbase-mcp@latest
+8 verbose argv "exec" "--yes" "--" "@cloudbase/cloudbase-mcp@latest"
+9 verbose logfile logs-max:10 dir:/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_logs/2026-05-14T11_51_11_597Z-
+10 verbose logfile /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_logs/2026-05-14T11_51_11_597Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+13 http fetch GET 200 https://registry.npmjs.org/@cloudbase%2fcloudbase-mcp 468ms (cache revalidated)
+14 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+15 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+16 verbose cwd /Users/li/Desktop/lab3-2
+17 verbose os Darwin 24.0.0
+18 verbose node v24.15.0
+19 verbose npm  v11.12.1
+20 verbose exit 0
+21 info ok

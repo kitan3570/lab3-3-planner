@@ -1,0 +1,380 @@
+[2026-05-14T19:50:31.263+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "none"
+}
+[2026-05-14T19:50:31.267+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T19:50:31.282+08:00] [DEBUG] [cache] failed to read cache meta, treating as miss {
+  "error": {
+    "errno": -2,
+    "code": "ENOENT",
+    "syscall": "open",
+    "path": "/Users/li/Desktop/lab3-2/.cloudbase-home/.cloudbase-mcp/cache-meta.json"
+  }
+}
+[2026-05-14T19:50:31.282+08:00] [DEBUG] [downloadResources] 开始新下载任务
+[2026-05-14T19:50:31.283+08:00] [DEBUG] [downloadResources] 文件锁已获取
+[2026-05-14T19:50:31.283+08:00] [DEBUG] [cache] failed to read cache meta, treating as miss {
+  "error": {
+    "errno": -2,
+    "code": "ENOENT",
+    "syscall": "open",
+    "path": "/Users/li/Desktop/lab3-2/.cloudbase-home/.cloudbase-mcp/cache-meta.json"
+  }
+}
+[2026-05-14T19:50:31.641+08:00] [DEBUG] [downloadOpenAPI] openAPIDocs 下载完成 {
+  "successCount": 5,
+  "total": 5
+}
+[2026-05-14T19:50:32.716+08:00] [DEBUG] [downloadResources] webTemplate 下载完成
+[2026-05-14T19:50:32.716+08:00] [DEBUG] [downloadResources] 所有资源下载完成
+[2026-05-14T19:50:32.718+08:00] [DEBUG] [downloadResources] 缓存已更新
+[2026-05-14T19:50:32.719+08:00] [DEBUG] [downloadResources] 文件锁已释放
+[2026-05-14T19:50:32.729+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T19:50:32.729+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T19:50:32.729+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T19:50:32.913+08:00] [DEBUG] report_success {
+  "eventCode": "toolkit_lifecycle",
+  "deviceId": "f651777c..."
+}
+[2026-05-14T19:50:42.018+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "none"
+}
+[2026-05-14T19:50:42.022+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T19:50:42.037+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 9319,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T19:50:42.038+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T19:50:42.048+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T19:50:42.049+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T19:50:42.049+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T19:50:42.514+08:00] [DEBUG] report_success {
+  "eventCode": "toolkit_lifecycle",
+  "deviceId": "f651777c..."
+}
+[2026-05-14T19:51:12.979+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "none"
+}
+[2026-05-14T19:51:12.984+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T19:51:12.998+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 40280,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T19:51:12.998+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T19:51:13.011+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T19:51:13.012+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T19:51:13.012+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T19:51:13.254+08:00] [DEBUG] report_success {
+  "eventCode": "toolkit_lifecycle",
+  "deviceId": "f651777c..."
+}
+[2026-05-14T19:59:46.077+08:00] [DEBUG] 检测到 IDE 集成环境 {
+  "ide": "Trae"
+}
+[2026-05-14T19:59:46.078+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "Trae"
+}
+[2026-05-14T19:59:46.082+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T19:59:46.088+08:00] [INFO] Integration IDE: Trae
+[2026-05-14T19:59:46.098+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 553380,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T19:59:46.098+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T19:59:46.111+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T19:59:46.111+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T19:59:46.111+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0",
+    "ide": "Trae"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T19:59:46.145+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "exit",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:00:22.862+08:00] [DEBUG] 检测到 IDE 集成环境 {
+  "ide": "Trae"
+}
+[2026-05-14T20:00:22.863+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "Trae"
+}
+[2026-05-14T20:00:22.867+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T20:00:22.873+08:00] [INFO] Integration IDE: Trae
+[2026-05-14T20:00:22.882+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 590164,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T20:00:22.882+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T20:00:22.896+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T20:00:22.897+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:00:22.897+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0",
+    "ide": "Trae"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T20:00:22.924+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "exit",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:01:01.834+08:00] [DEBUG] 检测到 IDE 集成环境 {
+  "ide": "Trae"
+}
+[2026-05-14T20:01:01.835+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "Trae"
+}
+[2026-05-14T20:01:01.839+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T20:01:01.844+08:00] [INFO] Integration IDE: Trae
+[2026-05-14T20:01:01.852+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 629134,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T20:01:01.853+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T20:01:01.866+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T20:01:01.866+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:01:01.866+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0",
+    "ide": "Trae"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T20:01:01.885+08:00] [DEBUG] 开始执行工具: envQuery {
+  "args": {
+    "action": "list",
+    "limit": 50,
+    "offset": 0
+  }
+}
+[2026-05-14T20:01:01.894+08:00] [ERROR] Failed to initialize CloudBase Manager: {
+  "error": {
+    "name": "ToolPayloadError",
+    "message": "当前未登录，请先调用 auth 工具完成认证。",
+    "stack": "ToolPayloadError: 当前未登录，请先调用 auth 工具完成认证。\n    at t.throwToolPayloadError (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:405643)\n    at f (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:177237)\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:34736\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:2250994\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:876863\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:303233"
+  }
+}
+[2026-05-14T20:01:01.894+08:00] [DEBUG] 获取环境列表时出错，尝试降级到 listEnvs(): {
+  "error": {
+    "name": "ToolPayloadError",
+    "message": "当前未登录，请先调用 auth 工具完成认证。",
+    "stack": "ToolPayloadError: 当前未登录，请先调用 auth 工具完成认证。\n    at t.throwToolPayloadError (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:405643)\n    at f (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:177237)\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:34736\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:2250994\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:876863\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:303233"
+  }
+}
+[2026-05-14T20:01:01.894+08:00] [ERROR] Failed to initialize CloudBase Manager: {
+  "error": {
+    "name": "ToolPayloadError",
+    "message": "当前未登录，请先调用 auth 工具完成认证。",
+    "stack": "ToolPayloadError: 当前未登录，请先调用 auth 工具完成认证。\n    at t.throwToolPayloadError (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:405643)\n    at f (/Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:177237)\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:35355\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:2250994\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:5:876863\n    at async /Users/li/Desktop/lab3-2/.cloudbase-home/.npm/_npx/88d9f76c32260533/node_modules/@cloudbase/cloudbase-mcp/dist/cli.cjs:2:303233"
+  }
+}
+[2026-05-14T20:01:01.894+08:00] [DEBUG] 工具执行成功: envQuery {
+  "duration": 10
+}
+[2026-05-14T20:01:01.895+08:00] [DEBUG] [telemetry] 工具调用 envId 获取结果 {
+  "toolName": "envQuery",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:01:01.895+08:00] [DEBUG] [telemetry] 工具调用上报参数 {
+  "toolName": "envQuery",
+  "eventData": {
+    "toolName": "envQuery",
+    "success": "true",
+    "duration": "10",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0",
+    "inputParams": "[已包含]",
+    "ide": "Trae"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T20:01:01.897+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "exit",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:01:56.700+08:00] [DEBUG] 检测到 IDE 集成环境 {
+  "ide": "Trae"
+}
+[2026-05-14T20:01:56.702+08:00] [DEBUG] report_init {
+  "enabled": true,
+  "deviceId": "f651777c...",
+  "ide": "Trae"
+}
+[2026-05-14T20:01:56.717+08:00] [DEBUG] [cache] Using default TTL {
+  "ttlMs": 86400000
+}
+[2026-05-14T20:01:56.739+08:00] [INFO] Integration IDE: Trae
+[2026-05-14T20:01:56.765+08:00] [DEBUG] [cache] evaluated cache meta {
+  "ageMs": 684047,
+  "ttlMs": 86400000,
+  "valid": true
+}
+[2026-05-14T20:01:56.766+08:00] [DEBUG] [downloadResources] 使用缓存（快速路径）
+[2026-05-14T20:01:56.813+08:00] [INFO] TencentCloudBase MCP Server running on stdio
+[2026-05-14T20:01:56.814+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "start",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
+[2026-05-14T20:01:56.814+08:00] [DEBUG] [telemetry] 生命周期事件上报参数 {
+  "event": "start",
+  "eventData": {
+    "event": "start",
+    "envId": "unknown",
+    "nodeVersion": "v24.15.0",
+    "osType": "Darwin",
+    "osRelease": "24.0.0",
+    "arch": "arm64",
+    "mcpVersion": "2.18.0",
+    "ide": "Trae"
+  },
+  "envIdSource": "default"
+}
+[2026-05-14T20:01:56.912+08:00] [DEBUG] [telemetry] 生命周期事件 envId 获取结果 {
+  "event": "exit",
+  "envId": "unknown",
+  "envIdSource": "default",
+  "hasCloudBaseOptions": false,
+  "cloudBaseOptionsEnvId": null
+}
