@@ -1,0 +1,23 @@
+{
+  "name": "location-cloud-function",
+  "version": "1.0.0",
+  "description": "CloudBase Node.js Cloud Function for Location management with weather integration",
+  "main": "index.js",
+  "keywords": ["cloudbase", "cloud-function", "node-sdk", "weather"],
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "author": "",
+  "license": "MIT",
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/*.test.js"],
+    "collectCoverageFrom": ["*.js", "!*.test.js"],
+    "coverageDirectory": "coverage",
+    "verbose": true
+  }
+}
