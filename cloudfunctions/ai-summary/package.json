@@ -1,0 +1,13 @@
+{
+  "name": "ai-summary-cloud-function",
+  "version": "1.0.0",
+  "description": "CloudBase Node.js Cloud Function for AI-powered travel plan summary",
+  "main": "index.js",
+  "keywords": ["cloudbase", "cloud-function", "ai", "deepseek", "summary"],
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.0.0",
+    "axios": "^1.6.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
