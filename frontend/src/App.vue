@@ -273,8 +273,7 @@ function exportItinerary() {
       <div class="brand">
         <div class="brand__mark" aria-hidden="true"></div>
         <div class="brand__text">
-          <div class="brand__title">智能出行规划器</div>
-          <div class="brand__subtitle">前端仅访问本地后端 API；第三方 Key 全部由后端托管</div>
+          <div class="brand__title">智能出行规划器 v2.1 自动部署版</div>
         </div>
       </div>
 
