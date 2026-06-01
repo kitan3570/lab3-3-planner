@@ -9,29 +9,72 @@ const props = defineProps<{
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 const text = ref<string>("")
+const fullText = ref<string>("")
+const currentIndex = ref(0)
+const typewriterInterval = ref<number | null>(null)
 
 const canGenerate = computed(() => Boolean(props.planId) && !loading.value)
 
+function stopTypewriter() {
+  if (typewriterInterval.value !== null) {
+    clearInterval(typewriterInterval.value)
+    typewriterInterval.value = null
+  }
+}
+
+function startTypewriter(content: string) {
+  stopTypewriter()
+  fullText.value = content
+  text.value = ""
+  currentIndex.value = 0
+  
+  const speed = 20 // ms per character
+  
+  typewriterInterval.value = window.setInterval(() => {
+    if (currentIndex.value < fullText.value.length) {
+      text.value += fullText.value[currentIndex.value]
+      currentIndex.value++
+    } else {
+      stopTypewriter()
+    }
+  }, speed)
+}
+
 async function generate() {
   if (!props.planId || loading.value) return
+  
+  stopTypewriter()
   loading.value = true
   errorMessage.value = null
+  text.value = ""
+  fullText.value = ""
+  currentIndex.value = 0
+
   try {
-    const res = await apiFetch<{ text: string }>(`/plans/${props.planId}/ai-summary`, { method: "POST" })
-    const t = (res.text ?? "").trim()
-    if (!t) {
-      text.value = ""
+    const result = await apiFetch<{ text: string }>(`/plans/${props.planId}/ai-summary`, { method: "POST" })
+    const content = (result.text ?? "").trim()
+    
+    if (!content) {
       errorMessage.value = "AI 生成失败，请检查 CloudBase 控制台中 ai-summary 云函数的 DEEPSEEK_API_KEY 环境变量配置"
       return
     }
-    text.value = t
+    
+    // Start typewriter effect
+    startTypewriter(content)
+    
   } catch (e) {
-    console.error("详细错误", e)
+    console.error("[AI] 详细错误", e)
     errorMessage.value = e instanceof ApiError ? e.message : `生成失败: ${e instanceof Error ? e.message : String(e)}`
   } finally {
     loading.value = false
   }
 }
+
+// Cleanup on unmount
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  stopTypewriter()
+})
 </script>
 
 <template>
@@ -54,7 +97,7 @@ async function generate() {
       </div>
 
       <div v-else-if="text" class="out">
-        <pre class="md">{{ text }}</pre>
+        <pre class="md">{{ text }}<span v-if="typewriterInterval !== null" class="cursor">|</span></pre>
       </div>
     </div>
   </section>
@@ -170,5 +213,15 @@ async function generate() {
   font-size: 12.5px;
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.88);
+}
+
+.cursor {
+  animation: blink 1s step-end infinite;
+  display: inline-block;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 </style>
