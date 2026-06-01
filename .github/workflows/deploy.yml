@@ -1,0 +1,44 @@
+name: CloudBase CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install CloudBase CLI
+        run: npm install -g @cloudbase/cli
+
+      - name: Login to CloudBase
+        env:
+          SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+        run: tcb login --apiKeyId $SECRET_ID --apiKeySecret $SECRET_KEY
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Deploy Frontend
+        env:
+          ENV_ID: ${{ secrets.ENV_ID }}
+        run: tcb hosting deploy frontend/dist -e $ENV_ID
+
+      - name: Deploy Cloud Functions
+        env:
+          ENV_ID: ${{ secrets.ENV_ID }}
+        run: tcb fn deploy --all -e $ENV_ID -y
