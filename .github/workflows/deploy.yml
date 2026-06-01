@@ -34,7 +34,7 @@ jobs:
           if [ -z "$ENV_ID" ]; then echo "❌ 错误: 找不到 ENV_ID"; exit 1; fi
           echo "✅ 所有环境变量检查通过！"
 
-- name: Login to CloudBase
+      - name: Login to CloudBase
         env:
           SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
           SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
