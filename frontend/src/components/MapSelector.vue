@@ -687,4 +687,82 @@ async function addToPlan() {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .card__header {
+    padding: 16px 16px 10px;
+  }
+
+  .card__title {
+    font-size: 18px;
+  }
+
+  .card__subtitle {
+    font-size: 12px;
+  }
+
+  .mapWrap {
+    height: 240px;
+  }
+
+  .mapBar {
+    grid-template-columns: 1fr;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .mapBar__left {
+    order: 2;
+  }
+
+  .mapBar__right {
+    order: 1;
+  }
+
+  .search {
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+  }
+
+  .search__input {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .search__btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .panel {
+    padding: 12px 14px 16px;
+  }
+
+  .panel__row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .field__input {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .cta {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .btn--cta {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+
+  .status {
+    font-size: 11px;
+    text-align: center;
+  }
+}
 </style>

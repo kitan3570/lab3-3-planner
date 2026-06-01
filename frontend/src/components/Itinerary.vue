@@ -652,4 +652,115 @@ async function remove(locationId: number) {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .board__header {
+    padding: 12px 14px 10px;
+  }
+
+  .board__title {
+    font-size: 14px;
+  }
+
+  .board__subtitle {
+    font-size: 11px;
+  }
+
+  .tabs {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .tab {
+    padding: 8px 10px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .cols {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  .col__header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .cards {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .card {
+    padding: 10px 10px;
+  }
+
+  .card__name {
+    font-size: 13px;
+  }
+
+  .iconBtn {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+
+  .card__sub {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 4px 7px;
+    font-size: 11px;
+  }
+
+  .coord {
+    font-size: 11px;
+  }
+
+  .form {
+    margin-top: 10px;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .field__input {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .field__label {
+    font-size: 10px;
+  }
+
+  .note {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .field__textarea {
+    min-height: 60px;
+  }
+
+  .card__foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .hint, .err {
+    font-size: 11px;
+  }
+
+  .exportBtn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
 </style>

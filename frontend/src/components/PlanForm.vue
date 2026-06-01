@@ -355,4 +355,89 @@ function reset() {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .card__header {
+    padding: 16px 16px 10px;
+  }
+
+  .card__title {
+    font-size: 18px;
+  }
+
+  .card__subtitle {
+    font-size: 12px;
+  }
+
+  .headRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tpl {
+    justify-content: stretch;
+    gap: 6px;
+  }
+
+  .chip {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .form {
+    padding: 14px 14px 16px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .field__input {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .field__label {
+    font-size: 11px;
+  }
+
+  .field--full {
+    margin-top: 12px;
+  }
+
+  .field__textarea {
+    min-height: 72px;
+  }
+
+  .alert {
+    margin-top: 12px;
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+
+  .btn--primary {
+    order: 1;
+  }
+
+  .btn--ghost {
+    order: 2;
+  }
+}
 </style>

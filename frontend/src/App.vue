@@ -559,4 +559,54 @@ function exportItinerary() {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  .top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .brand__title {
+    font-size: 18px;
+  }
+
+  .toolbar {
+    justify-content: stretch;
+    gap: 8px;
+  }
+
+  .pill {
+    padding: 8px 10px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .banner {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .upper {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .lower__grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .lower__empty {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+}
 </style>
