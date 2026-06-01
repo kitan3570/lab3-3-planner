@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:  # 增加这块环境变量，强制使用最新的 Node.js 24 消除警告
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,11 +34,11 @@ jobs:
           if [ -z "$ENV_ID" ]; then echo "❌ 错误: 找不到 ENV_ID"; exit 1; fi
           echo "✅ 所有环境变量检查通过！"
 
-      - name: Login to CloudBase
+- name: Login to CloudBase
         env:
           SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
           SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
-        run: tcb login --apiKeyId $SECRET_ID --apiKeySecret $SECRET_KEY
+        run: tcb login --apiKeyId $SECRET_ID --apiKey $SECRET_KEY
 
       - name: Build Frontend
         run: |
