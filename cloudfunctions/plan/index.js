@@ -13,6 +13,35 @@ const cb = cloudbase.init({
 
 const db = cb.database();
 
+async function getWeatherSummary(lat, lng) {
+  try {
+    const host = (process.env.YOUR_QWEATHER_HOST || process.env.QWEATHER_HOST || 'https://devapi.qweather.com').replace(/\/$/, '');
+    const key = process.env.YOUR_QWEATHER_KEY || process.env.QWEATHER_KEY;
+    if (!key || key === 'your_qweather_key' || key === 'your_key') {
+      return { ok: false, summary: "未配置真实天气 Key", error: "Missing/invalid QWEATHER_KEY" };
+    }
+
+    const weatherUrl = `https://${host}/v7/weather/now?location=${lng},${lat}&key=${key}`;
+    const res = await fetch(weatherUrl);
+    const text = await res.text();
+
+    if (!text || text.trim() === '') {
+      return { ok: false, summary: "天气 API 返回空响应", error: `HTTP ${res.status}` };
+    }
+
+    const data = JSON.parse(text);
+
+    if (data.code === '200' && data.now) {
+      return { ok: true, summary: `${data.now.text} ${data.now.temp}°C`, error: null };
+    } else {
+      return { ok: false, summary: "天气获取失败", error: data.code };
+    }
+  } catch (e) {
+    console.error("Weather fetch error:", e);
+    return { ok: false, summary: "天气请求异常", error: e.message };
+  }
+}
+
 let collectionCreated = false;
 
 async function ensureCollection(collectionName) {
@@ -139,12 +168,12 @@ app.get('/plans/:id', async (req, res) => {
       .orderBy('time_slot', 'asc')
       .get();
 
-    plan.locations = locationsResult.data.map(loc => {
+    plan.locations = await Promise.all(locationsResult.data.map(async loc => {
       loc.id = loc._id;
       delete loc._id;
-      loc.weather = loc.weather || { ok: false, summary: "天气暂不可接入", error: null };
+      loc.weather = await getWeatherSummary(loc.lat, loc.lng);
       return loc;
-    });
+    }));
 
     res.status(200).json(plan);
   } catch (error) {

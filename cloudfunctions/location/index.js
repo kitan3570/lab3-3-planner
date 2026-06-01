@@ -11,6 +11,35 @@ const cb = cloudbase.init({
 
 const db = cb.database();
 
+async function getWeatherSummary(lat, lng) {
+  try {
+    const host = (process.env.YOUR_QWEATHER_HOST || process.env.QWEATHER_HOST || 'https://devapi.qweather.com').replace(/\/$/, '');
+    const key = process.env.YOUR_QWEATHER_KEY || process.env.QWEATHER_KEY;
+    if (!key || key === 'your_qweather_key' || key === 'your_key') {
+      return { ok: false, summary: "未配置真实天气 Key", error: "Missing/invalid QWEATHER_KEY" };
+    }
+
+    const weatherUrl = `https://${host}/v7/weather/now?location=${lng},${lat}&key=${key}`;
+    const res = await fetch(weatherUrl);
+    const text = await res.text();
+
+    if (!text || text.trim() === '') {
+      return { ok: false, summary: "天气 API 返回空响应", error: `HTTP ${res.status}` };
+    }
+
+    const data = JSON.parse(text);
+
+    if (data.code === '200' && data.now) {
+      return { ok: true, summary: `${data.now.text} ${data.now.temp}°C`, error: null };
+    } else {
+      return { ok: false, summary: "天气获取失败", error: data.code };
+    }
+  } catch (e) {
+    console.error("Weather fetch error:", e);
+    return { ok: false, summary: "天气请求异常", error: e.message };
+  }
+}
+
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -57,7 +86,7 @@ app.post('/plans/:planId/locations', async (req, res) => {
       estimated_cost: data.estimated_cost ? parseFloat(data.estimated_cost) : 0,
       duration: data.duration ? parseInt(data.duration) : 60,
       remarks: data.remarks || null,
-      weather: data.weather || { ok: false, summary: "天气暂不可接入", error: null },
+      weather: data.weather || null,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -68,6 +97,7 @@ app.post('/plans/:planId/locations', async (req, res) => {
       id: result.id,
       ...locationData,
     };
+    newLocation.weather = await getWeatherSummary(newLocation.lat, newLocation.lng);
 
     res.status(201).json(newLocation);
   } catch (error) {
@@ -88,15 +118,15 @@ app.get('/plans/:planId/locations', async (req, res) => {
       .orderBy('time_slot', 'asc')
       .get();
 
-    const locations = result.data.map(loc => {
+    const locationsWithWeather = await Promise.all(result.data.map(async loc => {
       const location = { ...loc };
       location.id = location._id;
       delete location._id;
-      location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
+      location.weather = await getWeatherSummary(location.lat, location.lng);
       return location;
-    });
+    }));
 
-    res.status(200).json(locations);
+    res.status(200).json(locationsWithWeather);
   } catch (error) {
     console.error('[Location] Error listing locations:', error);
     res.status(500).json({
@@ -120,7 +150,7 @@ app.get('/plans/:planId/locations/:locationId', async (req, res) => {
     const location = { ...result.data[0] };
     location.id = location._id;
     delete location._id;
-    location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
+    location.weather = await getWeatherSummary(location.lat, location.lng);
 
     res.status(200).json(location);
   } catch (error) {
@@ -170,7 +200,7 @@ app.put('/plans/:planId/locations/:locationId', async (req, res) => {
     const location = { ...result.data[0] };
     location.id = location._id;
     delete location._id;
-    location.weather = location.weather || { ok: false, summary: "天气暂不可接入", error: null };
+    location.weather = await getWeatherSummary(location.lat, location.lng);
     res.status(200).json(location);
   } catch (error) {
     console.error('[Location] Error updating location:', error);
